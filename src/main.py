@@ -149,6 +149,12 @@ def setup_scheduler(strategy_manager, tuner, weighter, rl_agent, guard) -> Backg
 
 _last_prices = {}
 
+# ANSI цвета
+GREEN = "\033[92m"
+RED = "\033[91m"
+YELLOW = "\033[93m"
+RESET = "\033[0m"
+
 def show_prices(binance_client):
     """Показать текущие цены в терминале с изменением."""
     global _last_prices
@@ -167,12 +173,20 @@ def show_prices(binance_client):
                 change_pct = (change / prev) * 100
                 arrow = "📈" if change >= 0 else "📉"
                 sign = "+" if change >= 0 else ""
-                logger.info(f"  {arrow} {symbol}/USDT: ${price:,.2f} ({sign}{change_pct:.2f}%)")
+                
+                if change_pct > 0:
+                    color = GREEN
+                elif change_pct < 0:
+                    color = RED
+                else:
+                    color = YELLOW
+                
+                print(f"  {arrow} {symbol}/USDT: ${price:,.2f} {color}({sign}{change_pct:.2f}%){RESET}")
             else:
-                logger.info(f"  💰 {symbol}/USDT: ${price:,.2f}")
+                print(f"  💰 {symbol}/USDT: ${price:,.2f}")
             _last_prices[symbol] = price
         except Exception:
-            logger.info(f"  ❓ {symbol}/USDT: загрузка...")
+            print(f"  ❓ {symbol}/USDT: загрузка...")
     
     logger.info("───────────────────────────────────────")
 
