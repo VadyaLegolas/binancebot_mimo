@@ -259,6 +259,10 @@ async def handle_buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         order = binance.place_market_buy(symbol, amount)
 
+        # Get actual fill price from fills
+        fill_price = float(order["fills"][0]["price"]) if order.get("fills") else float(order.get("price", 0))
+        fill_qty = float(order["executedQty"])
+
         db = SessionLocal()
         try:
             trade = Trade(
@@ -267,8 +271,8 @@ async def handle_buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 side="BUY",
                 type="MARKET",
                 strategy=None,
-                quantity=float(order["executedQty"]),
-                price=float(order["price"]),
+                quantity=fill_qty,
+                price=fill_price,
                 total_usdt=amount,
                 fee_rate=0.001,
                 fee_buy=amount * 0.001,
@@ -283,8 +287,8 @@ async def handle_buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await reply(update, 
             f"🟢 ПОКУПКА {symbol}\n"
             f"Сумма: ${amount:.2f}\n"
-            f"Количество: {order['executedQty']}\n"
-            f"Цена: ${float(order['price']):,.2f}\n"
+            f"Количество: {fill_qty}\n"
+            f"Цена: ${fill_price:,.2f}\n"
             f"Ордер: #{order['orderId']}"
         )
     except Exception as e:
@@ -307,13 +311,14 @@ async def handle_sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
         binance = get_binance(context.application)
         order = binance.place_market_sell(symbol, quantity)
         
-        sell_price = float(order['price'])
-        sell_amount = quantity * sell_price
+        fill_price = float(order["fills"][0]["price"]) if order.get("fills") else float(order.get("price", 0))
+        fill_qty = float(order["executedQty"])
+        sell_amount = fill_qty * fill_price
 
         await reply(update, 
             f"🔴 ПРОДАЖА {symbol}\n"
-            f"Количество: {quantity}\n"
-            f"Цена: ${sell_price:,.2f}\n"
+            f"Количество: {fill_qty}\n"
+            f"Цена: ${fill_price:,.2f}\n"
             f"Сумма: ${sell_amount:,.2f}\n"
             f"Ордер: #{order['orderId']}"
         )
