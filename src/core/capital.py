@@ -32,11 +32,30 @@ def get_capital_info(binance_client=None) -> dict | None:
         if not session:
             return None
 
-        net_pnl = db.query(func.coalesce(func.sum(Trade.net_pnl), 0.0)).filter(
-            Trade.status == "CLOSED"
-        ).scalar()
+        # Calculate total spent on buys and received from sells
+        total_spent = 0.0
+        total_received = 0.0
+        
+        closed_trades = db.query(Trade).filter(Trade.status == "CLOSED").all()
+        for trade in closed_trades:
+            if trade.side == "BUY":
+                total_spent += trade.total_usdt
+            elif trade.side == "SELL":
+                total_received += trade.total_usdt
 
-        # Calculate unrealized PnL from open trades using current prices
+        # PnL = received from sells - spent on buys - fees
+        total_fees = db.query(func.coalesce(func.sum(Trade.fee_total), 0.0)).scalar()
+        net_pnl = total_received - total_spent - total_fees
+
+        # Get real balance from Binance
+        real_balance = 0.0
+        if binance_client:
+            try:
+                real_balance = binance_client.get_balance("USDT")
+            except Exception:
+                pass
+
+        # Calculate unrealized PnL from open trades
         open_trades = db.query(Trade).filter(Trade.status == "OPEN").all()
         unrealized_pnl = 0.0
         total_invested = 0.0
@@ -52,25 +71,29 @@ def get_capital_info(binance_client=None) -> dict | None:
                 except Exception:
                     pass
 
-        current_balance = session.starting_capital + net_pnl
+        # PnL = real balance - starting balance
+        pnl = real_balance - session.starting_capital
 
         # Calculate drawdown dynamically
-        max_balance = max(session.max_balance, current_balance)
+        max_balance = max(session.max_balance, real_balance)
         drawdown_pct = 0.0
         if max_balance > 0:
-            drawdown_pct = ((max_balance - current_balance) / max_balance) * 100
+            drawdown_pct = ((max_balance - real_balance) / max_balance) * 100
 
         return {
             "starting_capital": session.starting_capital,
-            "net_pnl": net_pnl,
+            "real_balance": round(real_balance, 2),
+            "net_pnl": round(pnl, 2),
             "unrealized_pnl": round(unrealized_pnl, 2),
-            "current_balance": round(current_balance, 2),
-            "total_with_open": round(current_balance + unrealized_pnl, 2),
-            "total_invested": round(total_invested, 2),
+            "current_balance": round(real_balance, 2),
+            "total_with_open": round(real_balance + unrealized_pnl, 2),
+            "total_spent": round(total_spent, 2),
+            "total_received": round(total_received, 2),
+            "total_fees": round(total_fees, 2),
             "open_positions": len(open_trades),
             "max_balance": max_balance,
             "drawdown_pct": round(drawdown_pct, 2),
-            "roi_pct": round((net_pnl / session.starting_capital * 100) if session.starting_capital > 0 else 0, 2),
+            "roi_pct": round((pnl / session.starting_capital * 100) if session.starting_capital > 0 else 0, 2),
         }
     finally:
         db.close()
