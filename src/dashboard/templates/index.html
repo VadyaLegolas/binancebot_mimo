@@ -433,7 +433,16 @@
 
         <div class="card full-width">
             <div class="section-title">📋 История сделок</div>
-            <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center;">
+            <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center; flex-wrap: wrap;">
+                <div>
+                    <label style="color: var(--text-secondary); font-size: 12px;">Монета:</label>
+                    <select id="coin-filter" style="background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin-left: 8px;">
+                        <option value="">Все</option>
+                        <option value="BTC">BTC</option>
+                        <option value="ETH">ETH</option>
+                        <option value="SOL">SOL</option>
+                    </select>
+                </div>
                 <div>
                     <label style="color: var(--text-secondary); font-size: 12px;">С:</label>
                     <input type="date" id="date-from" style="background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin-left: 8px;">
@@ -442,8 +451,8 @@
                     <label style="color: var(--text-secondary); font-size: 12px;">По:</label>
                     <input type="date" id="date-to" style="background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin-left: 8px;">
                 </div>
-                <button onclick="applyDateFilter()" style="background: var(--accent); color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Применить</button>
-                <button onclick="clearDateFilter()" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; cursor: pointer;">Сбросить</button>
+                <button onclick="applyFilters()" style="background: var(--accent); color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Применить</button>
+                <button onclick="clearFilters()" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; cursor: pointer;">Сбросить</button>
             </div>
             <div style="overflow-x: auto;">
                 <table>
@@ -645,11 +654,16 @@
             tbody.innerHTML = html;
         }
 
-        function applyDateFilter() {
+        function applyFilters() {
+            const coinFilter = document.getElementById('coin-filter').value;
             const fromDate = document.getElementById('date-from').value;
             const toDate = document.getElementById('date-to').value;
             
             let filtered = allTrades;
+            
+            if (coinFilter) {
+                filtered = filtered.filter(t => t.symbol === coinFilter);
+            }
             
             if (fromDate) {
                 filtered = filtered.filter(t => {
@@ -670,7 +684,8 @@
             renderTrades(filtered);
         }
 
-        function clearDateFilter() {
+        function clearFilters() {
+            document.getElementById('coin-filter').value = '';
             document.getElementById('date-from').value = '';
             document.getElementById('date-to').value = '';
             renderTrades(allTrades);
