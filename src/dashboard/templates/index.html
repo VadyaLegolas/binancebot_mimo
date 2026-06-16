@@ -537,9 +537,9 @@
                 const statsRes = await fetch('/api/stats');
                 if (statsRes.ok) {
                     const stats = await statsRes.json();
-                    document.getElementById('win-rate').textContent = stats.win_rate + '%';
-                    document.getElementById('total-trades').textContent = stats.total_trades;
-                    document.getElementById('total-fees').textContent = '-' + stats.total_fees.toFixed(2);
+                    document.getElementById('win-rate').textContent = (stats.win_rate || 0) + '%';
+                    document.getElementById('total-trades').textContent = stats.total_trades || 0;
+                    document.getElementById('total-fees').textContent = '-' + (stats.total_fees || 0).toFixed(2);
                 }
                 console.log('Stats loaded');
 
