@@ -129,7 +129,9 @@ async def handle_init(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         binance = get_binance(context.application)
+        logger.info(f"Balance check: binance client type = {type(binance)}")
         account = binance._request_with_retry(binance.client.get_account)
+        logger.info(f"Balance check: account keys = {list(account.keys())[:5]}")
         
         balances = []
         for balance in account["balances"]:
@@ -138,12 +140,14 @@ async def handle_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if free > 0 or locked > 0:
                 balances.append((balance["asset"], free, locked))
         
+        logger.info(f"Balance check: found {len(balances)} balances")
+        
         if not balances:
             await reply(update, "💰 Баланс пуст")
             return
         
         lines = ["💰 Баланс аккаунта:\n"]
-        for asset, free, locked in sorted(balances, key=lambda x: -x[1]):
+        for asset, free, locked in sorted(balances, key=lambda x: -x[1])[:10]:
             if locked > 0:
                 lines.append(f"  {asset}: {free:.6f} (заморожено: {locked:.6f})")
             else:
@@ -151,7 +155,8 @@ async def handle_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         await reply(update, "\n".join(lines))
     except Exception as e:
-        await reply(update, "⚠️ Не удалось получить баланс. Попробуйте позже.")
+        logger.error(f"Balance check error: {e}")
+        await reply(update, f"⚠️ Ошибка: {e}")
 
 
 async def handle_capital(update: Update, context: ContextTypes.DEFAULT_TYPE):
