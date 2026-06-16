@@ -29,8 +29,15 @@ def send_telegram(message: str):
 
 
 def load_config() -> dict:
-    with open("config.yaml") as f:
-        return yaml.safe_load(f)
+    try:
+        with open("config.yaml") as f:
+            return yaml.safe_load(f)
+    except FileNotFoundError:
+        logger.error("Файл config.yaml не найден!")
+        raise
+    except yaml.YAMLError as e:
+        logger.error(f"Ошибка парсинга config.yaml: {e}")
+        raise
 
 
 def setup_strategies(binance_client, config: dict):

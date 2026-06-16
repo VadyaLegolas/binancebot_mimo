@@ -143,10 +143,10 @@ class StrategyManager:
 
     def _execute_sell(self, action: TradeAction, symbol: str, strategy_name: str):
         try:
-            if action.quantity:
-                order = self.binance.place_market_sell(symbol, action.quantity)
-            elif action.price and action.quantity:
+            if action.price and action.quantity:
                 order = self.binance.place_limit_sell(symbol, action.price, action.quantity)
+            elif action.quantity:
+                order = self.binance.place_market_sell(symbol, action.quantity)
             else:
                 logger.warning(f"Sell action for {symbol} has no quantity")
                 return

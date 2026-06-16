@@ -7,6 +7,7 @@ from src.database.session import SessionLocal
 from src.database.models import Trade
 import json
 import os
+import threading
 
 WEIGHT_UPDATE_HOURS = 4
 MIN_SAMPLES = 20
@@ -26,6 +27,7 @@ class StrategyWeighter:
         self._model: SGDClassifier | None = None
         self._weights: dict[str, float] = {s: 1.0 / len(STRATEGY_NAMES) for s in STRATEGY_NAMES}
         self._last_update: datetime | None = None
+        self._lock = threading.Lock()
         self._load_model()
 
     def _load_model(self):
@@ -34,12 +36,11 @@ class StrategyWeighter:
                 with open(MODEL_PATH, "r") as f:
                     data = json.load(f)
                     self._weights = data.get("weights", self._weights)
-                    self._last_update = data.get("last_update")
                     if data.get("last_update"):
                         self._last_update = datetime.fromisoformat(data["last_update"])
-                logger.info("StrategyWeighter: loaded weights from disk")
+                logger.info("StrategyWeighter: загружены веса с диска")
             except Exception as e:
-                logger.error(f"StrategyWeighter: failed to load model: {e}")
+                logger.error(f"StrategyWeighter: ошибка загрузки модели: {e}")
 
     def _save_model(self):
         os.makedirs(os.path.dirname(MODEL_PATH) or ".", exist_ok=True)
@@ -62,24 +63,25 @@ class StrategyWeighter:
         if not self.enabled:
             return self._weights
 
-        samples = self._collect_training_data()
-        if len(samples) < MIN_SAMPLES:
-            logger.info(f"StrategyWeighter: only {len(samples)} samples, need {MIN_SAMPLES}")
-            return self._weights
+        with self._lock:
+            samples = self._collect_training_data()
+            if len(samples) < MIN_SAMPLES:
+                logger.info(f"StrategyWeighter: only {len(samples)} samples, need {MIN_SAMPLES}")
+                return self._weights
 
-        X = np.array([s["features"] for s in samples])
-        y = np.array([s["best_strategy"] for s in samples])
+            X = np.array([s["features"] for s in samples])
+            y = np.array([s["best_strategy"] for s in samples])
 
-        if self._model is None:
-            self._model = SGDClassifier(
-                loss="log_loss",
-                max_iter=1000,
-                tol=1e-3,
-                random_state=42,
-            )
-            self._model.fit(X, y)
-        else:
-            self._model.partial_fit(X, y, classes=STRATEGY_NAMES)
+            if self._model is None:
+                self._model = SGDClassifier(
+                    loss="log_loss",
+                    max_iter=1000,
+                    tol=1e-3,
+                    random_state=42,
+                )
+                self._model.fit(X, y)
+            else:
+                self._model.partial_fit(X, y, classes=STRATEGY_NAMES)
 
         current_features = self._get_current_features()
         if current_features is not None:

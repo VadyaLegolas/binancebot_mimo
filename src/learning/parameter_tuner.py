@@ -1,4 +1,4 @@
-import json
+import numpy as np
 from datetime import datetime
 from loguru import logger
 import optuna
@@ -40,9 +40,9 @@ PARAM_SPACES = {
 
 
 class ParameterTuner:
-    def __init__(self, strategy_manager):
+    def __init__(self, strategy_manager, anomaly_guard=None):
         self.strategy_manager = strategy_manager
-        self.anomaly_guard = AnomalyGuard()
+        self.anomaly_guard = anomaly_guard or AnomalyGuard()
         self._last_optimization: dict[str, int] = {}
 
     def should_optimize(self, strategy_name: str) -> bool:
@@ -59,7 +59,7 @@ class ParameterTuner:
 
     def optimize(self, strategy_name: str) -> dict | None:
         if strategy_name not in PARAM_SPACES:
-            logger.warning(f"ParameterTuner: no param space defined for {strategy_name}")
+            logger.warning(f"ParameterTuner: нет пространства параметров для {strategy_name}")
             return None
 
         strategy = self.strategy_manager.strategies.get(strategy_name)
@@ -69,7 +69,7 @@ class ParameterTuner:
         current_params = strategy.get_params()
         trades = self._get_strategy_trades(strategy_name)
         if len(trades) < 30:
-            logger.info(f"ParameterTuner: {strategy_name} has only {len(trades)} trades, need 30+")
+            logger.info(f"ParameterTuner: {strategy_name} имеет только {len(trades)} сделок, нужно 30+")
             return None
 
         split_idx = int(len(trades) * WALK_FORWARD_TRAIN_RATIO)
@@ -89,11 +89,13 @@ class ParameterTuner:
         test_sharpe = self._evaluate_params(strategy_name, best_params, test_trades)
         current_sharpe = self._evaluate_params(strategy_name, current_params, test_trades)
 
-        improvement = ((best_sharpe - current_sharpe) / abs(current_sharpe) * 100
-                       if current_sharpe != 0 else best_sharpe * 100)
+        if current_sharpe == 0:
+            improvement = best_sharpe * 100 if best_sharpe > 0 else 0
+        else:
+            improvement = ((best_sharpe - current_sharpe) / abs(current_sharpe) * 100)
 
         if improvement < MIN_IMPROVEMENT_PCT:
-            logger.info(f"ParameterTuner: {strategy_name} improvement {improvement:.1f}% < {MIN_IMPROVEMENT_PCT}%, skipping")
+            logger.info(f"ParameterTuner: улучшение {strategy_name} {improvement:.1f}% < {MIN_IMPROVEMENT_PCT}%, пропуск")
             self._last_optimization[strategy_name] = self._get_trade_count(strategy_name)
             return None
 
@@ -113,7 +115,7 @@ class ParameterTuner:
             },
         )
 
-        logger.info(f"ParameterTuner: {strategy_name} updated, Sharpe {current_sharpe:.2f} -> {best_sharpe:.2f}")
+        logger.info(f"ParameterTuner: {strategy_name} обновлён, Sharpe {current_sharpe:.2f} -> {best_sharpe:.2f}")
         return best_params
 
     def _objective(self, trial, strategy_name: str, trades: list) -> float:
@@ -138,7 +140,6 @@ class ParameterTuner:
         if not pnls or all(p == 0 for p in pnls):
             return 0.0
 
-        import numpy as np
         pnl_array = np.array(pnls)
         mean_pnl = np.mean(pnl_array)
         std_pnl = np.std(pnl_array) if np.std(pnl_array) > 0 else 1.0

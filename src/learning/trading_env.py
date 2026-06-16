@@ -1,6 +1,7 @@
 import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
+from loguru import logger
 from src.indicators import calc_indicators
 from src.core.constants import FEE_RATE
 
@@ -72,7 +73,7 @@ class TradingEnv(gym.Env):
             self._balance = sell_total - fee
             self._trades.append({
                 "entry": self._entry_price,
-                "exit": next_price,
+                "exit": current_price,
                 "pnl": net_pnl,
             })
             self._last_3_pnls.append(net_pnl)
@@ -151,5 +152,6 @@ class TradingEnv(gym.Env):
                 "close": float(k[4]),
                 "volume": float(k[5]),
             } for k in raw]
-        except Exception:
-            return [{"open": 100, "high": 101, "low": 99, "close": 100, "volume": 1000}] * 1000
+        except Exception as e:
+            logger.error(f"TradingEnv: ошибка загрузки klines: {e}")
+            return []
