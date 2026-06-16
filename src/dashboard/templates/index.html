@@ -487,13 +487,13 @@
                 data: {
                     labels: [],
                     datasets: [{
-                        label: 'Balance',
+                        label: 'Баланс',
                         data: [],
                         borderColor: '#00d4aa',
                         backgroundColor: 'rgba(0, 212, 170, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        pointRadius: 0,
+                        pointRadius: 2,
                         pointHoverRadius: 6,
                         pointHoverBackgroundColor: '#00d4aa',
                     }]
@@ -516,6 +516,33 @@
                     }
                 }
             });
+        }
+
+        function updateChart(trades) {
+            if (!balanceChart || !trades || trades.length === 0) return;
+            
+            // Sort trades by date
+            const sorted = [...trades].sort((a, b) => new Date(a.opened_at) - new Date(b.opened_at));
+            
+            const labels = [];
+            const data = [];
+            let balance = 100; // Starting capital
+            
+            sorted.forEach(t => {
+                const date = new Date(t.opened_at).toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                labels.push(date);
+                
+                if (t.side === 'BUY') {
+                    balance -= t.total_usdt || (t.price * t.quantity);
+                } else if (t.status === 'CLOSED') {
+                    balance += (t.total_usdt || (t.price * t.quantity)) + (t.net_pnl || 0);
+                }
+                data.push(balance);
+            });
+            
+            balanceChart.data.labels = labels;
+            balanceChart.data.datasets[0].data = data;
+            balanceChart.update();
         }
 
         async function refresh() {
@@ -563,6 +590,7 @@
                 if (tradesRes.ok) {
                     allTrades = await tradesRes.json();
                     renderTrades(allTrades);
+                    updateChart(allTrades);
                 }
 
                 const learningRes = await fetch('/api/learning');

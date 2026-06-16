@@ -36,9 +36,16 @@ def get_capital_info() -> dict | None:
             Trade.status == "CLOSED"
         ).scalar()
 
-        unrealized_pnl = db.query(func.coalesce(func.sum(Trade.gross_pnl), 0.0)).filter(
-            Trade.status == "OPEN"
-        ).scalar()
+        # Calculate unrealized PnL from open trades
+        open_trades = db.query(Trade).filter(Trade.status == "OPEN").all()
+        unrealized_pnl = 0.0
+        for trade in open_trades:
+            # Use gross_pnl if available, otherwise use entry price vs current
+            if trade.gross_pnl != 0:
+                unrealized_pnl += trade.gross_pnl
+            elif trade.total_usdt > 0:
+                # Estimate: trade amount minus current value
+                unrealized_pnl += 0  # Can't calculate without current price
 
         current_balance = session.starting_capital + net_pnl
 
