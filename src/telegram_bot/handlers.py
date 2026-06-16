@@ -129,7 +129,7 @@ async def handle_init(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         binance = get_binance(context.application)
-        account = binance.client.get_account()
+        account = binance._request_with_retry(binance.client.get_account)
         
         balances = []
         for balance in account["balances"]:
