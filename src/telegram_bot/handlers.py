@@ -293,10 +293,16 @@ async def handle_buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         binance = get_binance(context.application)
 
-        # Check USDT balance
-        usdt_balance = binance.get_balance("USDT")
-        if usdt_balance < amount:
-            await reply(update, f"⚠️ Недостаточно USDT.\nБаланс: {usdt_balance:.2f} USDT\nНужно: {amount:.2f} USDT")
+        # Get tracked balance from capital info
+        from src.core.capital import get_capital_info
+        capital_info = get_capital_info()
+        if not capital_info:
+            await reply(update, "⚠️ Сначала установите капитал: /init 100")
+            return
+        
+        tracked_balance = capital_info['balance']
+        if tracked_balance < amount:
+            await reply(update, f"⚠️ Недостаточно средств.\nБаланс: {tracked_balance:.2f} USDT\nНужно: {amount:.2f} USDT")
             return
 
         min_notional = binance.get_min_notional(symbol)
