@@ -458,16 +458,16 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Дата</th>
-                            <th>Монета</th>
-                            <th>Сторона</th>
-                            <th>Цена входа</th>
+                            <th onclick="sortTrades('opened_at')" style="cursor: pointer;">Дата ↕</th>
+                            <th onclick="sortTrades('symbol')" style="cursor: pointer;">Монета ↕</th>
+                            <th onclick="sortTrades('side')" style="cursor: pointer;">Сторона ↕</th>
+                            <th onclick="sortTrades('price')" style="cursor: pointer;">Цена входа ↕</th>
                             <th>Цена выхода</th>
-                            <th>Количество</th>
-                            <th>Сумма</th>
-                            <th>PnL</th>
-                            <th>Стратегия</th>
-                            <th>Статус</th>
+                            <th onclick="sortTrades('quantity')" style="cursor: pointer;">Количество ↕</th>
+                            <th onclick="sortTrades('total_usdt')" style="cursor: pointer;">Сумма ↕</th>
+                            <th onclick="sortTrades('net_pnl')" style="cursor: pointer;">PnL ↕</th>
+                            <th onclick="sortTrades('strategy')" style="cursor: pointer;">Стратегия ↕</th>
+                            <th onclick="sortTrades('status')" style="cursor: pointer;">Статус ↕</th>
                         </tr>
                     </thead>
                     <tbody id="trades-body">
@@ -608,6 +608,36 @@
         setInterval(refresh, 30000);
 
         let allTrades = [];
+        let sortField = 'opened_at';
+        let sortDir = -1; // -1 = desc, 1 = asc
+
+        function sortTrades(field) {
+            if (sortField === field) {
+                sortDir *= -1;
+            } else {
+                sortField = field;
+                sortDir = -1;
+            }
+            
+            allTrades.sort((a, b) => {
+                let valA = a[field];
+                let valB = b[field];
+                
+                if (field === 'opened_at') {
+                    valA = new Date(valA).getTime();
+                    valB = new Date(valB).getTime();
+                } else if (typeof valA === 'string') {
+                    valA = valA.toLowerCase();
+                    valB = valB.toLowerCase();
+                }
+                
+                if (valA < valB) return -sortDir;
+                if (valA > valB) return sortDir;
+                return 0;
+            });
+            
+            renderTrades(allTrades);
+        }
 
         async function loadTrades() {
             try {
