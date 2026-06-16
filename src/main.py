@@ -246,6 +246,20 @@ def main():
 
     from src.telegram_bot.app import run_telegram_bot
     logger.info("Запуск Telegram бота...")
+    
+    # Показать баланс
+    try:
+        account = binance_client.client.get_account()
+        balances = []
+        for b in account["balances"]:
+            free = float(b["free"])
+            if free > 0:
+                balances.append(f"{b['asset']}: {free:.4f}")
+        if balances:
+            logger.info("💰 Баланс: " + " | ".join(balances[:5]))
+    except Exception:
+        pass
+    
     send_telegram(f"✅ Бот готов к работе!\nРежим: {mode}\nСтратегии: {', '.join(strategy_manager.strategies.keys())}")
 
     try:
