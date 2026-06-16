@@ -28,16 +28,16 @@ class BinanceClient:
                     return float(balance["free"])
             return 0.0
         except BinanceAPIException as e:
-            logger.error(f"Binance API error getting balance: {e.status_code} - {e.message}")
-            raise
+            logger.warning(f"Binance: ошибка получения баланса ({e.message}), повтор...")
+            return 0.0
 
     def get_price(self, symbol: str) -> float:
         try:
             ticker = self._request_with_retry(self.client.get_symbol_ticker, symbol=f"{symbol}USDT")
             return float(ticker["price"])
         except BinanceAPIException as e:
-            logger.error(f"Binance API error getting price for {symbol}: {e.status_code} - {e.message}")
-            raise
+            logger.warning(f"Binance: ошибка получения цены {symbol} ({e.message})")
+            return 0.0
 
     def get_symbol_info(self, symbol: str) -> dict:
         if symbol not in self._symbol_info_cache:
