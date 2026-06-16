@@ -429,24 +429,29 @@
                 <div id="weights-container"></div>
             </div>
 
-            <div class="card half-width">
-                <div class="section-title">⚡ Последние сделки</div>
-                <div style="overflow-x: auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Монета</th>
-                                <th>Сторона</th>
-                                <th>Цена</th>
-                                <th>Сумма</th>
-                                <th>PnL</th>
-                                <th>Статус</th>
-                            </tr>
-                        </thead>
-                        <tbody id="trades-body">
-                        </tbody>
-                    </table>
-                </div>
+        </div>
+
+        <div class="card full-width">
+            <div class="section-title">📋 История сделок</div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Дата</th>
+                            <th>Монета</th>
+                            <th>Сторона</th>
+                            <th>Цена входа</th>
+                            <th>Цена выхода</th>
+                            <th>Количество</th>
+                            <th>Сумма</th>
+                            <th>PnL</th>
+                            <th>Стратегия</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trades-body">
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -554,18 +559,24 @@
                 if (tradesRes.ok) {
                     const trades = await tradesRes.json();
                     const tbody = document.getElementById('trades-body');
-                    tbody.innerHTML = trades.slice(0, 10).map(t => `
+                    tbody.innerHTML = trades.map(t => {
+                        const date = t.opened_at ? new Date(t.opened_at).toLocaleString('ru-RU') : '--';
+                        const pnlClass = t.net_pnl >= 0 ? 'positive' : 'negative';
+                        const pnlSign = t.net_pnl >= 0 ? '+' : '';
+                        return `
                         <tr>
+                            <td>${date}</td>
                             <td style="font-weight: 500;">${t.symbol}</td>
                             <td><span class="badge ${t.side.toLowerCase()}">${t.side}</span></td>
                             <td>$${t.price.toFixed(2)}</td>
+                            <td>${t.closed_at ? '$' + t.price.toFixed(2) : '--'}</td>
+                            <td>${t.quantity.toFixed(6)}</td>
                             <td>$${t.total_usdt.toFixed(2)}</td>
-                            <td style="color: ${t.net_pnl >= 0 ? 'var(--success)' : 'var(--danger)'}">
-                                ${t.net_pnl >= 0 ? '+' : ''}${t.net_pnl.toFixed(4)}
-                            </td>
+                            <td class="${pnlClass}">${pnlSign}${t.net_pnl.toFixed(2)}</td>
+                            <td>${t.strategy || 'manual'}</td>
                             <td><span class="badge ${t.status.toLowerCase()}">${t.status}</span></td>
                         </tr>
-                    `).join('');
+                    `}).join('');
                 }
 
                 const learningRes = await fetch('/api/learning');
