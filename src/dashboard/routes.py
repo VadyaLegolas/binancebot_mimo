@@ -21,7 +21,9 @@ def health():
 
 @bp.route("/api/capital")
 def api_capital():
-    info = get_capital_info()
+    from flask import current_app
+    binance = current_app.config.get("binance")
+    info = get_capital_info(binance)
     if not info:
         return jsonify({"error": "No session found. Run /init first."}), 404
     return jsonify(info)

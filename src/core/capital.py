@@ -25,7 +25,7 @@ def init_capital(amount: float, mode: str = "testnet") -> BotSession:
         db.close()
 
 
-def get_capital_info() -> dict | None:
+def get_capital_info(binance_client=None) -> dict | None:
     db = SessionLocal()
     try:
         session = db.query(BotSession).order_by(-BotSession.id).first()
@@ -36,28 +36,41 @@ def get_capital_info() -> dict | None:
             Trade.status == "CLOSED"
         ).scalar()
 
-        # Calculate unrealized PnL from open trades
+        # Calculate unrealized PnL from open trades using current prices
         open_trades = db.query(Trade).filter(Trade.status == "OPEN").all()
         unrealized_pnl = 0.0
+        total_invested = 0.0
+        
         for trade in open_trades:
-            # Use gross_pnl if available, otherwise use entry price vs current
-            if trade.gross_pnl != 0:
-                unrealized_pnl += trade.gross_pnl
-            elif trade.total_usdt > 0:
-                # Estimate: trade amount minus current value
-                unrealized_pnl += 0  # Can't calculate without current price
+            total_invested += trade.total_usdt
+            if binance_client:
+                try:
+                    current_price = binance_client.get_price(trade.symbol)
+                    if current_price > 0:
+                        current_value = trade.quantity * current_price
+                        unrealized_pnl += current_value - trade.total_usdt
+                except Exception:
+                    pass
 
         current_balance = session.starting_capital + net_pnl
+
+        # Calculate drawdown dynamically
+        max_balance = max(session.max_balance, current_balance)
+        drawdown_pct = 0.0
+        if max_balance > 0:
+            drawdown_pct = ((max_balance - current_balance) / max_balance) * 100
 
         return {
             "starting_capital": session.starting_capital,
             "net_pnl": net_pnl,
-            "unrealized_pnl": unrealized_pnl,
-            "current_balance": current_balance,
-            "total_with_open": current_balance + unrealized_pnl,
-            "max_balance": session.max_balance,
-            "drawdown_pct": session.current_drawdown,
-            "roi_pct": (net_pnl / session.starting_capital * 100) if session.starting_capital > 0 else 0,
+            "unrealized_pnl": round(unrealized_pnl, 2),
+            "current_balance": round(current_balance, 2),
+            "total_with_open": round(current_balance + unrealized_pnl, 2),
+            "total_invested": round(total_invested, 2),
+            "open_positions": len(open_trades),
+            "max_balance": max_balance,
+            "drawdown_pct": round(drawdown_pct, 2),
+            "roi_pct": round((net_pnl / session.starting_capital * 100) if session.starting_capital > 0 else 0, 2),
         }
     finally:
         db.close()
