@@ -320,11 +320,11 @@
         <div class="grid">
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">Стартовый капитал</span>
+                    <span class="card-title">Текущий баланс</span>
                     <div class="card-icon">💰</div>
                 </div>
                 <div class="stat-value" id="starting">--</div>
-                <div class="stat-change" id="starting-change">Начальный баланс</div>
+                <div class="stat-change" id="starting-change">Капитал с учётом сделок</div>
             </div>
 
             <div class="card">
@@ -492,7 +492,19 @@
                 if (capRes.ok) {
                     const cap = await capRes.json();
 
-                    document.getElementById('starting').textContent = cap.starting_capital.toFixed(2) + ' USDT';
+                    // Показать текущий баланс с цветом
+                    const startingEl = document.getElementById('starting');
+                    const currentBalance = cap.current_balance;
+                    const startingCapital = cap.starting_capital;
+                    startingEl.textContent = currentBalance.toFixed(2) + ' USDT';
+                    
+                    if (currentBalance > startingCapital) {
+                        startingEl.style.color = 'var(--success)';
+                    } else if (currentBalance < startingCapital) {
+                        startingEl.style.color = 'var(--danger)';
+                    } else {
+                        startingEl.style.color = 'var(--text-primary)';
+                    }
 
                     const pnlEl = document.getElementById('pnl');
                     pnlEl.textContent = (cap.net_pnl >= 0 ? '+' : '') + cap.net_pnl.toFixed(2) + ' USDT';
