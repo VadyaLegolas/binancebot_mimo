@@ -557,14 +557,14 @@
                     // Реальный баланс (Binance)
                     const realBalanceEl = document.getElementById('real-balance');
                     const realBalance = cap.real_balance || 0;
-                    const startingCapital = cap.starting_capital || 100;
-                    const realPnl = realBalance - startingCapital;
-                    const realPnlSign = realPnl >= 0 ? '+' : '';
-                    realBalanceEl.textContent = realBalance.toFixed(2) + ' USDT (' + realPnlSign + realPnl.toFixed(2) + ')';
-                    realBalanceEl.style.color = realPnl >= 0 ? 'var(--success)' : realPnl < 0 ? 'var(--danger)' : 'var(--text-primary)';
+                    realBalanceEl.textContent = realBalance.toFixed(2) + ' USDT';
 
-                    // Баланс = Реальный баланс (PnL = real - starting)
+                    // Баланс = стартовый капитал (фиксировано)
                     const startingEl = document.getElementById('starting');
+                    const startingCapital = cap.starting_capital || 100;
+                    startingEl.textContent = startingCapital.toFixed(2) + ' USDT';
+
+                    // PnL = реальный баланс - стартовый
                     const pnl = cap.net_pnl || 0;
                     const pnlSign = pnl >= 0 ? '+' : '';
                     
