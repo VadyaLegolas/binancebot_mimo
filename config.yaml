@@ -19,3 +19,44 @@ logging:
   level: INFO
   rotation: "10 MB"
   retention: "7 days"
+
+strategies:
+  grid:
+    grid_count: 10
+    grid_step_pct: 0.8
+    investment_usdt: 15
+
+  dca:
+    amount_per_buy: 10
+    max_orders: 5
+    price_deviation: 2.5
+    take_profit_net: 1.8
+    stop_loss: 12.0
+
+  rsi_ema:
+    rsi_period: 14
+    rsi_oversold: 35
+    rsi_overbought: 65
+    ema_period: 200
+    timeframe: "1h"
+    position_size: 15
+    take_profit_net: 2.0
+    stop_loss: 2.5
+
+  mtf:
+    timeframes: ["4h", "1h", "15m"]
+    position_size: 15
+    take_profit_net: 3.5
+    stop_loss: 2.0
+    trailing_stop: true
+    trailing_pct: 2.0
+    adx_threshold: 35
+
+auto_selector:
+  enabled: true
+
+risk:
+  max_open_positions: 7
+  daily_loss_limit_pct: 5.0
+  reserved_usdt: 20
+  cooldown_minutes: 15
