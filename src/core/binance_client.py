@@ -40,7 +40,7 @@ class BinanceClient:
     def get_min_notional(self, symbol: str) -> float:
         info = self.get_symbol_info(symbol)
         for f in info["filters"]:
-            if f["filterType"] == "NOTIONAL":
+            if f["filterType"] in ("MIN_NOTIONAL", "NOTIONAL"):
                 return float(f["minNotional"])
         return 10.0
 

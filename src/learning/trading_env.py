@@ -64,9 +64,9 @@ class TradingEnv(gym.Env):
             self._total_fees += fee
 
         elif action == 2 and self._position > 0:
-            sell_total = self._position * next_price
+            sell_total = self._position * current_price
             fee = sell_total * FEE_RATE
-            net_pnl = (next_price - self._entry_price) * self._position - fee - (
+            net_pnl = (current_price - self._entry_price) * self._position - fee - (
                 self._entry_price * self._position * FEE_RATE
             )
             self._balance = sell_total - fee

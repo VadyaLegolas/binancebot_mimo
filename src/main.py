@@ -124,7 +124,7 @@ def run_flask(config, tuner, weighter, rl_agent, guard):
     app.config["rl_agent"] = rl_agent
     app.config["guard"] = guard
     app.run(
-        host=os.getenv("FLASK_HOST", "0.0.0.0"),
+        host=os.getenv("FLASK_HOST", "127.0.0.1"),
         port=int(os.getenv("FLASK_PORT", "5000")),
         use_reloader=False,
     )

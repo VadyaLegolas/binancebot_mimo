@@ -73,8 +73,8 @@ class ParameterTuner:
             return None
 
         split_idx = int(len(trades) * WALK_FORWARD_TRAIN_RATIO)
-        train_trades = trades[split_idx:]
-        test_trades = trades[:split_idx]
+        train_trades = trades[:split_idx]
+        test_trades = trades[split_idx:]
 
         study = optuna.create_study(direction="maximize")
         study.optimize(

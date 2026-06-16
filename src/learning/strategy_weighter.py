@@ -5,7 +5,7 @@ from sklearn.linear_model import SGDClassifier
 from src.indicators import calc_indicators
 from src.database.session import SessionLocal
 from src.database.models import Trade
-import pickle
+import json
 import os
 
 WEIGHT_UPDATE_HOURS = 4
@@ -31,24 +31,24 @@ class StrategyWeighter:
     def _load_model(self):
         if os.path.exists(MODEL_PATH):
             try:
-                with open(MODEL_PATH, "rb") as f:
-                    data = pickle.load(f)
-                    self._model = data.get("model")
+                with open(MODEL_PATH, "r") as f:
+                    data = json.load(f)
                     self._weights = data.get("weights", self._weights)
                     self._last_update = data.get("last_update")
-                logger.info("StrategyWeighter: loaded model from disk")
+                    if data.get("last_update"):
+                        self._last_update = datetime.fromisoformat(data["last_update"])
+                logger.info("StrategyWeighter: loaded weights from disk")
             except Exception as e:
                 logger.error(f"StrategyWeighter: failed to load model: {e}")
 
     def _save_model(self):
         os.makedirs(os.path.dirname(MODEL_PATH) or ".", exist_ok=True)
         try:
-            with open(MODEL_PATH, "wb") as f:
-                pickle.dump({
-                    "model": self._model,
+            with open(MODEL_PATH, "w") as f:
+                json.dump({
                     "weights": self._weights,
-                    "last_update": self._last_update,
-                }, f)
+                    "last_update": self._last_update.isoformat() if self._last_update else None,
+                }, f, indent=2)
         except Exception as e:
             logger.error(f"StrategyWeighter: failed to save model: {e}")
 
