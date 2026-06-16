@@ -524,13 +524,13 @@
                     startingEl.textContent = currentBalance.toFixed(2) + ' USDT (' + profitSign + profit.toFixed(2) + ')';
                     startingEl.style.color = currentBalance > startingCapital ? 'var(--success)' : currentBalance < startingCapital ? 'var(--danger)' : 'var(--text-primary)';
 
-                    document.getElementById('pnl').textContent = (cap.net_pnl >= 0 ? '+' : '') + cap.net_pnl.toFixed(2) + ' USDT';
-                    document.getElementById('pnl').style.color = cap.net_pnl >= 0 ? 'var(--success)' : 'var(--danger)';
-                    document.getElementById('pnl-change').textContent = (cap.net_pnl >= 0 ? '+' : '') + cap.net_pnl_pct.toFixed(2) + '%';
-                    document.getElementById('roi').textContent = (cap.roi_pct >= 0 ? '+' : '') + cap.roi_pct.toFixed(1) + '%';
-                    document.getElementById('roi').style.color = cap.roi_pct >= 0 ? 'var(--success)' : 'var(--danger)';
-                    document.getElementById('drawdown').textContent = cap.drawdown_pct.toFixed(2) + '%';
-                    document.getElementById('open-pnl').textContent = (cap.unrealized_pnl >= 0 ? '+' : '') + cap.unrealized_pnl.toFixed(2) + ' USDT';
+                    document.getElementById('pnl').textContent = (cap.net_pnl || 0 >= 0 ? '+' : '') + (cap.net_pnl || 0).toFixed(2) + ' USDT';
+                    document.getElementById('pnl').style.color = (cap.net_pnl || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
+                    document.getElementById('pnl-change').textContent = ((cap.net_pnl_pct || 0) >= 0 ? '+' : '') + (cap.net_pnl_pct || 0).toFixed(2) + '%';
+                    document.getElementById('roi').textContent = ((cap.roi_pct || 0) >= 0 ? '+' : '') + (cap.roi_pct || 0).toFixed(1) + '%';
+                    document.getElementById('roi').style.color = (cap.roi_pct || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
+                    document.getElementById('drawdown').textContent = (cap.drawdown_pct || 0).toFixed(2) + '%';
+                    document.getElementById('open-pnl').textContent = ((cap.unrealized_pnl || 0) >= 0 ? '+' : '') + (cap.unrealized_pnl || 0).toFixed(2) + ' USDT';
                 }
                 console.log('Capital loaded');
 
