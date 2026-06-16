@@ -9,6 +9,18 @@ class BinanceClient:
         self.client = Client(api_key, api_secret, testnet=testnet)
         self.testnet = testnet
         self._symbol_info_cache = {}
+        self._sync_time()
+
+    def _sync_time(self):
+        """Синхронизировать время с сервером Binance."""
+        try:
+            server_time = self.client.get_server_time()['serverTime']
+            local_time = int(time.time() * 1000)
+            offset = server_time - local_time
+            self.client.timestamp_offset = offset
+            logger.info(f"Binance: время синхронизировано (смещение: {offset}мс)")
+        except Exception as e:
+            logger.warning(f"Binance: не удалось синхронизировать время: {e}")
 
     def _request_with_retry(self, func, max_retries=3, *args, **kwargs):
         for attempt in range(max_retries):
