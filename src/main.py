@@ -226,7 +226,8 @@ def main():
         daemon=True,
     )
     flask_thread.start()
-    logger.info("Dashboard запущен на порту 5000")
+    port = int(os.getenv("FLASK_PORT", "5000"))
+    logger.info(f"Dashboard запущен: http://127.0.0.1:{port}")
 
     from src.telegram_bot.app import run_telegram_bot
     logger.info("Запуск Telegram бота...")
