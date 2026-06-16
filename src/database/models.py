@@ -1,5 +1,6 @@
 from sqlalchemy import String, Float, Integer, DateTime, Boolean, Text, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from datetime import datetime
 
 
 class Base(DeclarativeBase):
@@ -18,8 +19,8 @@ class BotSession(Base):
     max_balance: Mapped[float] = mapped_column(Float, default=0.0)
     current_drawdown: Mapped[float] = mapped_column(Float, default=0.0)
     status: Mapped[str] = mapped_column(String(10), default="active")
-    created_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.now())
-    updated_at: Mapped[DateTime] = mapped_column(DateTime, onupdate=func.now())
+    created_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class Trade(Base):
