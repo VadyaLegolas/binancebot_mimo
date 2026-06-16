@@ -570,10 +570,6 @@
                     const pnlSign = pnl >= 0 ? '+' : '';
                     startingEl.textContent = balance.toFixed(2) + ' USDT (' + pnlSign + pnl.toFixed(2) + ')';
                     startingEl.style.color = pnl >= 0 ? 'var(--success)' : pnl < 0 ? 'var(--danger)' : 'var(--text-primary)';
-                    const pnlSign = pnl >= 0 ? '+' : '';
-                    
-                    startingEl.textContent = realBalance.toFixed(2) + ' USDT (' + pnlSign + pnl.toFixed(2) + ')';
-                    startingEl.style.color = pnl >= 0 ? 'var(--success)' : pnl < 0 ? 'var(--danger)' : 'var(--text-primary)';
 
                     document.getElementById('pnl').textContent = pnlSign + pnl.toFixed(2) + ' USDT';
                     document.getElementById('pnl').style.color = pnl >= 0 ? 'var(--success)' : 'var(--danger)';
