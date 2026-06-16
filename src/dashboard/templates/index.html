@@ -554,12 +554,14 @@
                 if (capRes.ok) {
                     const cap = await capRes.json();
                     
-                    // Реальный баланс (Binance) + баланс в скобках
+                    // Реальный баланс (Binance) + изменение от сделок
                     const realBalanceEl = document.getElementById('real-balance');
                     const realBalance = cap.real_balance || 0;
-                    const balance = cap.balance || 100;
-                    realBalanceEl.textContent = realBalance.toFixed(2) + ' USDT (' + realBalance.toFixed(2) + ' + ' + balance.toFixed(2) + ')';
-                    realBalanceEl.style.color = 'var(--text-primary)';
+                    const startingCapital = cap.starting_capital || 100;
+                    const realChange = realBalance - startingCapital;
+                    const realChangeSign = realChange >= 0 ? '+' : '';
+                    realBalanceEl.textContent = realBalance.toFixed(2) + ' USDT (' + realChangeSign + realChange.toFixed(2) + ')';
+                    realBalanceEl.style.color = realChange >= 0 ? 'var(--success)' : realChange < 0 ? 'var(--danger)' : 'var(--text-primary)';
 
                     // Баланс = стартовый + PnL (меняется при сделках)
                     const startingEl = document.getElementById('starting');
