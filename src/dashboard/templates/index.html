@@ -555,11 +555,11 @@
                     document.getElementById('total-fees').textContent = '-' + stats.total_fees.toFixed(2);
                 }
 
-                const tradesRes = await fetch('/api/trades?t=' + Date.now());
+                const tradesRes = await fetch('/api/trades');
                 console.log('Trades response status:', tradesRes.status);
                 if (tradesRes.ok) {
                     const trades = await tradesRes.json();
-                    console.log('Trades data:', trades);
+                    console.log('Trades count:', trades.length);
                     const tbody = document.getElementById('trades-body');
                     if (tbody && trades.length > 0) {
                         tbody.innerHTML = trades.map(t => {
