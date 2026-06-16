@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Bot Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 20px; color: #e94560; }
+        .card { background: #16213e; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .card h2 { color: #e94560; margin-bottom: 15px; font-size: 1.2em; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .stat { text-align: center; }
+        .stat .label { color: #888; font-size: 0.9em; }
+        .stat .value { font-size: 1.8em; font-weight: bold; margin: 5px 0; }
+        .stat .value.positive { color: #4ecca3; }
+        .stat .value.negative { color: #e94560; }
+        .chart-container { height: 300px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #333; }
+        th { color: #e94560; }
+        .badge { padding: 3px 8px; border-radius: 4px; font-size: 0.8em; }
+        .badge.buy { background: #4ecca3; color: #000; }
+        .badge.sell { background: #e94560; color: #fff; }
+        .refresh-btn { background: #e94560; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 1em; }
+        .refresh-btn:hover { background: #c73e54; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Trading Bot Dashboard</h1>
+
+        <div class="card">
+            <h2>💰 Capital</h2>
+            <div class="stat-grid" id="capital-stats">
+                <div class="stat">
+                    <div class="label">Starting Capital</div>
+                    <div class="value" id="starting">--</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Net PnL</div>
+                    <div class="value" id="pnl">--</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Current Balance</div>
+                    <div class="value" id="balance">--</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Open Positions</div>
+                    <div class="value" id="open-pnl">--</div>
+                </div>
+                <div class="stat">
+                    <div class="label">ROI</div>
+                    <div class="value" id="roi">--</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Drawdown</div>
+                    <div class="value" id="drawdown">--</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📊 Statistics</h2>
+            <div class="stat-grid">
+                <div class="stat">
+                    <div class="label">Win Rate</div>
+                    <div class="value" id="win-rate">--</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Total Trades</div>
+                    <div class="value" id="total-trades">--</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Total Fees</div>
+                    <div class="value" id="total-fees">--</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Recent Trades</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Side</th>
+                        <th>Price</th>
+                        <th>Amount</th>
+                        <th>Fees</th>
+                        <th>Net PnL</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="trades-body">
+                </tbody>
+            </table>
+        </div>
+
+        <button class="refresh-btn" onclick="refresh()">Refresh</button>
+    </div>
+
+    <script>
+        async function refresh() {
+            try {
+                const capRes = await fetch('/api/capital');
+                if (capRes.ok) {
+                    const cap = await capRes.json();
+                    document.getElementById('starting').textContent = cap.starting_capital.toFixed(2) + ' USDT';
+                    const pnlEl = document.getElementById('pnl');
+                    pnlEl.textContent = (cap.net_pnl >= 0 ? '+' : '') + cap.net_pnl.toFixed(2) + ' USDT';
+                    pnlEl.className = 'value ' + (cap.net_pnl >= 0 ? 'positive' : 'negative');
+                    document.getElementById('balance').textContent = cap.current_balance.toFixed(2) + ' USDT';
+                    document.getElementById('open-pnl').textContent = (cap.unrealized_pnl >= 0 ? '+' : '') + cap.unrealized_pnl.toFixed(2);
+                    const roiEl = document.getElementById('roi');
+                    roiEl.textContent = (cap.roi_pct >= 0 ? '+' : '') + cap.roi_pct.toFixed(1) + '%';
+                    roiEl.className = 'value ' + (cap.roi_pct >= 0 ? 'positive' : 'negative');
+                    document.getElementById('drawdown').textContent = cap.drawdown_pct.toFixed(2) + '%';
+                }
+
+                const statsRes = await fetch('/api/stats');
+                if (statsRes.ok) {
+                    const stats = await statsRes.json();
+                    document.getElementById('win-rate').textContent = stats.win_rate + '%';
+                    document.getElementById('total-trades').textContent = stats.total_trades;
+                    document.getElementById('total-fees').textContent = '-' + stats.total_fees.toFixed(2);
+                }
+
+                const tradesRes = await fetch('/api/trades');
+                if (tradesRes.ok) {
+                    const trades = await tradesRes.json();
+                    const tbody = document.getElementById('trades-body');
+                    tbody.innerHTML = trades.map(t => `
+                        <tr>
+                            <td>${t.symbol}</td>
+                            <td><span class="badge ${t.side.toLowerCase()}">${t.side}</span></td>
+                            <td>${t.price.toFixed(2)}</td>
+                            <td>${t.total_usdt.toFixed(2)}</td>
+                            <td>${t.fee_total.toFixed(4)}</td>
+                            <td class="${t.net_pnl >= 0 ? 'positive' : 'negative'}">${t.net_pnl >= 0 ? '+' : ''}${t.net_pnl.toFixed(4)}</td>
+                            <td>${t.status}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error('Refresh error:', e);
+            }
+        }
+        refresh();
+        setInterval(refresh, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+starting_capital:
+  testnet: 100
+  mainnet: 1000
+
+capital:
+  per_trade_usdt: 15
+  min_trade_usdt: 10
+  max_open_positions: 7
+  reserved_usdt: 20
+
+fees:
+  fee_rate: 0.001
+  breakeven_pct: 0.2
+
+trading_pairs:
+  core: ["BTC", "ETH", "SOL"]
+
+logging:
+  level: INFO
+  rotation: "10 MB"
+  retention: "7 days"
