@@ -160,7 +160,7 @@ def show_prices(binance_client):
     logger.info("Цены: " + " | ".join(prices))
 
 
-def run_flask(config, tuner, weighter, rl_agent, guard):
+def run_flask(config, tuner, weighter, rl_agent, guard, binance_client):
     import logging
     logging.getLogger('werkzeug').setLevel(logging.WARNING)
     
@@ -170,6 +170,7 @@ def run_flask(config, tuner, weighter, rl_agent, guard):
     app.config["weighter"] = weighter
     app.config["rl_agent"] = rl_agent
     app.config["guard"] = guard
+    app.config["binance"] = binance_client
     app.run(
         host=os.getenv("FLASK_HOST", "127.0.0.1"),
         port=int(os.getenv("FLASK_PORT", "5000")),
@@ -204,7 +205,7 @@ def main():
 
     flask_thread = threading.Thread(
         target=run_flask,
-        args=(config, tuner, weighter, rl_agent, guard),
+        args=(config, tuner, weighter, rl_agent, guard, binance_client),
         daemon=True,
     )
     flask_thread.start()

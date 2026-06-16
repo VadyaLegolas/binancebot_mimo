@@ -106,6 +106,19 @@ def create_dash_app() -> Flask:
     return app
 
 
+@bp.route("/api/balance")
+def api_balance():
+    from flask import current_app
+    binance = current_app.config.get("binance")
+    if not binance:
+        return jsonify({"error": "Binance client not initialized"}), 503
+    try:
+        usdt = binance.get_balance("USDT")
+        return jsonify({"usdt": usdt})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @bp.route("/api/learning")
 def api_learning():
     from flask import current_app

@@ -9,6 +9,22 @@ from src.database.models import Trade, BotSession
 from src.core.constants import CORE_PAIRS, MIN_TRADE_USDT
 from datetime import datetime
 
+COMMANDS_FOOTER = (
+    "\n\n──────────────────\n"
+    "📋 Команды:\n"
+    "/init <сумма> | /buy <монета> <сумма> | /sell <монета> <кол>\n"
+    "/balance | /capital | /positions | /stats | /pnl | /fees\n"
+    "/price <монета> | /pairs | /status | /mode testnet|mainnet\n"
+    "/strategy auto|grid|dca|rsi_ema|mtf\n"
+    "/rl on|off|status|train | /learn stats|retrain|history\n"
+    "/help"
+)
+
+
+async def reply(update, text):
+    """Ответить с закреплёнными командами."""
+    await reply(update, text + COMMANDS_FOOTER)
+
 
 def create_bot_app(binance_client=None) -> Application:
     token = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -53,64 +69,53 @@ def get_binance(app: Application) -> BinanceClient:
 
 
 async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
+    await reply(update, 
         "🤖 Binance Trading Bot v2.0\n\n"
-        "Commands:\n"
-        "/init <amount> - Set starting capital\n"
-        "/balance - Account balance\n"
-        "/capital - Capital info\n"
-        "/buy <coin> <amount> - Buy in USDT\n"
-        "/sell <coin> <qty> - Sell quantity\n"
-        "/sell_all <coin> - Sell all position\n"
-        "/positions - Open positions\n"
-        "/stats - Trading statistics\n"
-        "/pnl - Profit/Loss\n"
-        "/price <coin> - Current price\n"
-        "/pairs - Active pairs\n"
-        "/status - Bot status\n"
+        "Добро пожаловать! Используйте /help для списка команд."
+        + COMMANDS_FOOTER
     )
 
 
 async def handle_init(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Usage: /init <amount>\nExample: /init 100")
+        await reply(update, "Usage: /init <amount>\nExample: /init 100")
         return
 
     try:
         amount = float(context.args[0])
         if amount < 10:
-            await update.message.reply_text("Minimum starting capital: 10 USDT")
+            await reply(update, "Minimum starting capital: 10 USDT")
             return
 
         binance = get_binance(context.application)
         mode = "testnet" if os.getenv("BINANCE_TESTNET", "true").lower() == "true" else "mainnet"
         session = init_capital(amount, mode)
 
-        await update.message.reply_text(
+        await reply(update, 
             f"✅ Starting capital set: {amount:.2f} USDT\n"
             f"Mode: {mode}\n"
             f"Trading ready."
         )
     except ValueError:
-        await update.message.reply_text("Invalid amount. Usage: /init 100")
+        await reply(update, "Invalid amount. Usage: /init 100")
 
 
 async def handle_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         binance = get_binance(context.application)
         usdt = binance.get_balance("USDT")
-        await update.message.reply_text(f"💰 USDT Balance: {usdt:.2f}")
+        await reply(update, f"💰 USDT Balance: {usdt:.2f}")
     except Exception as e:
-        await update.message.reply_text(f"Error: {e}")
+        await reply(update, f"Error: {e}")
 
 
 async def handle_capital(update: Update, context: ContextTypes.DEFAULT_TYPE):
     info = get_capital_info()
     if not info:
-        await update.message.reply_text("No session found. Use /init <amount> first.")
+        await reply(update, "No session found. Use /init <amount> first.")
         return
 
-    await update.message.reply_text(
+    await reply(update, 
         f"💰 Capital Info\n\n"
         f"Starting: {info['starting_capital']:.2f} USDT\n"
         f"Net PnL: {info['net_pnl']:+.2f} USDT ({info['roi_pct']:+.1f}%)\n"
@@ -127,7 +132,7 @@ async def handle_positions(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         trades = db.query(Trade).filter(Trade.status == "OPEN").all()
         if not trades:
-            await update.message.reply_text("No open positions.")
+            await reply(update, "No open positions.")
             return
 
         binance = get_binance(context.application)
@@ -144,7 +149,7 @@ async def handle_positions(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception:
                 lines.append(f"{t.symbol}: {t.quantity:.6f} @ {t.price:.2f}")
 
-        await update.message.reply_text("\n".join(lines))
+        await reply(update, "\n".join(lines))
     finally:
         db.close()
 
@@ -161,7 +166,7 @@ async def handle_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         fees_sum = sum(f[0] for f in total_fees) if total_fees else 0
         win_rate = (wins / total * 100) if total > 0 else 0
 
-        await update.message.reply_text(
+        await reply(update, 
             f"📊 Statistics\n\n"
             f"Total Trades: {total}\n"
             f"Wins: {wins} | Losses: {total - wins}\n"
@@ -176,10 +181,10 @@ async def handle_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_pnl(update: Update, context: ContextTypes.DEFAULT_TYPE):
     info = get_capital_info()
     if not info:
-        await update.message.reply_text("No session found. Use /init first.")
+        await reply(update, "No session found. Use /init first.")
         return
 
-    await update.message.reply_text(
+    await reply(update, 
         f"📈 PnL Summary\n\n"
         f"Realized PnL: {info['net_pnl']:+.2f} USDT\n"
         f"Unrealized: {info['unrealized_pnl']:+.2f} USDT\n"
@@ -189,32 +194,32 @@ async def handle_pnl(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Usage: /price <coin>\nExample: /price BTC")
+        await reply(update, "Usage: /price <coin>\nExample: /price BTC")
         return
 
     symbol = context.args[0].upper()
     try:
         binance = get_binance(context.application)
         price = binance.get_price(symbol)
-        await update.message.reply_text(f"💰 {symbol}/USDT: {price:.2f}")
+        await reply(update, f"💰 {symbol}/USDT: {price:.2f}")
     except Exception as e:
-        await update.message.reply_text(f"Error getting price for {symbol}: {e}")
+        await reply(update, f"Error getting price for {symbol}: {e}")
 
 
 async def handle_buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) < 2:
-        await update.message.reply_text("Usage: /buy <coin> <amount_usdt>\nExample: /buy BTC 15")
+        await reply(update, "Usage: /buy <coin> <amount_usdt>\nExample: /buy BTC 15")
         return
 
     symbol = context.args[0].upper()
     try:
         amount = float(context.args[1])
     except ValueError:
-        await update.message.reply_text("Invalid amount.")
+        await reply(update, "Invalid amount.")
         return
 
     if amount < MIN_TRADE_USDT:
-        await update.message.reply_text(f"Minimum trade: {MIN_TRADE_USDT} USDT")
+        await reply(update, f"Minimum trade: {MIN_TRADE_USDT} USDT")
         return
 
     try:
@@ -222,7 +227,7 @@ async def handle_buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         min_notional = binance.get_min_notional(symbol)
         if amount < min_notional:
-            await update.message.reply_text(f"Minimum notional for {symbol}: {min_notional} USDT")
+            await reply(update, f"Minimum notional for {symbol}: {min_notional} USDT")
             return
 
         order = binance.place_market_buy(symbol, amount)
@@ -248,7 +253,7 @@ async def handle_buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
         finally:
             db.close()
 
-        await update.message.reply_text(
+        await reply(update, 
             f"✅ BUY {symbol}\n"
             f"Amount: {amount:.2f} USDT\n"
             f"Qty: {order['executedQty']}\n"
@@ -256,38 +261,38 @@ async def handle_buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Order ID: {order['orderId']}"
         )
     except Exception as e:
-        await update.message.reply_text(f"Error placing buy order: {e}")
+        await reply(update, f"Error placing buy order: {e}")
 
 
 async def handle_sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) < 2:
-        await update.message.reply_text("Usage: /sell <coin> <quantity>")
+        await reply(update, "Usage: /sell <coin> <quantity>")
         return
 
     symbol = context.args[0].upper()
     try:
         quantity = float(context.args[1])
     except ValueError:
-        await update.message.reply_text("Invalid quantity.")
+        await reply(update, "Invalid quantity.")
         return
 
     try:
         binance = get_binance(context.application)
         order = binance.place_market_sell(symbol, quantity)
 
-        await update.message.reply_text(
+        await reply(update, 
             f"✅ SELL {symbol}\n"
             f"Qty: {quantity}\n"
             f"Price: {order['price']}\n"
             f"Order ID: {order['orderId']}"
         )
     except Exception as e:
-        await update.message.reply_text(f"Error placing sell order: {e}")
+        await reply(update, f"Error placing sell order: {e}")
 
 
 async def handle_sell_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Usage: /sell_all <coin>")
+        await reply(update, "Usage: /sell_all <coin>")
         return
 
     symbol = context.args[0].upper()
@@ -299,20 +304,20 @@ async def handle_sell_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if balance["asset"] == symbol and float(balance["free"]) > 0:
                 qty = float(balance["free"])
                 order = binance.place_market_sell(symbol, qty)
-                await update.message.reply_text(
+                await reply(update, 
                     f"✅ SELL ALL {symbol}\n"
                     f"Qty: {qty}\n"
                     f"Price: {order['price']}"
                 )
                 return
 
-        await update.message.reply_text(f"No {symbol} balance found.")
+        await reply(update, f"No {symbol} balance found.")
     except Exception as e:
-        await update.message.reply_text(f"Error: {e}")
+        await reply(update, f"Error: {e}")
 
 
 async def handle_pairs(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
+    await reply(update, 
         f"📋 Active Pairs:\n" + "\n".join(f"• {p}/USDT" for p in CORE_PAIRS)
     )
 
@@ -323,7 +328,7 @@ async def handle_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     status_text = f"🤖 Bot Status\n\nMode: {'Testnet' if mode.lower() == 'true' else 'Mainnet'}"
     if info:
         status_text += f"\nBalance: {info['current_balance']:.2f} USDT\nPnL: {info['net_pnl']:+.2f}"
-    await update.message.reply_text(status_text)
+    await reply(update, status_text)
 
 
 async def handle_fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -331,14 +336,14 @@ async def handle_fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         total_fees = db.query(Trade.fee_total).filter(Trade.status == "CLOSED").all()
         fees_sum = sum(f[0] for f in total_fees) if total_fees else 0
-        await update.message.reply_text(f"💸 Total Fees Paid: -{fees_sum:.2f} USDT")
+        await reply(update, f"💸 Total Fees Paid: -{fees_sum:.2f} USDT")
     finally:
         db.close()
 
 
 async def handle_rl(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text(
+        await reply(update, 
             "Usage:\n"
             "/rl on - Enable live trading\n"
             "/rl off - Switch to shadow mode\n"
@@ -351,20 +356,20 @@ async def handle_rl(update: Update, context: ContextTypes.DEFAULT_TYPE):
     rl_agent = context.application.bot_data.get("rl_agent")
 
     if not rl_agent:
-        await update.message.reply_text("RL Agent not initialized.")
+        await reply(update, "RL Agent not initialized.")
         return
 
     if action == "on":
         rl_agent.set_mode("live")
-        await update.message.reply_text("RL Agent: LIVE mode enabled.")
+        await reply(update, "RL Agent: LIVE mode enabled.")
 
     elif action == "off":
         rl_agent.set_mode("shadow")
-        await update.message.reply_text("RL Agent: SHADOW mode. Observing only.")
+        await reply(update, "RL Agent: SHADOW mode. Observing only.")
 
     elif action == "status":
         status = rl_agent.get_status()
-        await update.message.reply_text(
+        await reply(update, 
             f"RL Agent Status\n\n"
             f"Mode: {status['mode']}\n"
             f"Model: {'loaded' if status['model_loaded'] else 'not trained'}\n"
@@ -374,24 +379,24 @@ async def handle_rl(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     elif action == "train":
-        await update.message.reply_text("Training RL agent...")
+        await reply(update, "Training RL agent...")
         try:
             result = rl_agent.train(steps=5000)
-            await update.message.reply_text(
+            await reply(update, 
                 f"Training complete!\n"
                 f"Mean reward: {result['mean_reward']:.2f}\n"
                 f"Steps: {result['steps']}"
             )
         except Exception as e:
-            await update.message.reply_text(f"Training failed: {e}")
+            await reply(update, f"Training failed: {e}")
 
     else:
-        await update.message.reply_text(f"Unknown action: {action}. Use on/off/status/train.")
+        await reply(update, f"Unknown action: {action}. Use on/off/status/train.")
 
 
 async def handle_learn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text(
+        await reply(update, 
             "Usage:\n"
             "/learn stats - Show learning statistics\n"
             "/learn retrain - Force retrain weights\n"
@@ -432,23 +437,23 @@ async def handle_learn(update: Update, context: ContextTypes.DEFAULT_TYPE):
             for a in anomalies:
                 lines.append(f"  [{a['type']}] {a['message']}")
 
-        await update.message.reply_text("\n".join(lines))
+        await reply(update, "\n".join(lines))
 
     elif action == "retrain":
         weighter = context.application.bot_data.get("weighter")
         if weighter:
-            await update.message.reply_text("Retraining strategy weights...")
+            await reply(update, "Retraining strategy weights...")
             weights = weighter.update()
-            await update.message.reply_text(f"Updated weights: {weights}")
+            await reply(update, f"Updated weights: {weights}")
         else:
-            await update.message.reply_text("Strategy Weighter not initialized.")
+            await reply(update, "Strategy Weighter not initialized.")
 
     elif action == "history":
         strategy = context.args[1] if len(context.args) > 1 else "grid"
         from src.learning.model_store import get_param_history
         history = get_param_history(strategy)
         if not history:
-            await update.message.reply_text(f"No param history for {strategy}")
+            await reply(update, f"No param history for {strategy}")
             return
 
         lines = [f"Param History: {strategy}\n"]
@@ -459,15 +464,15 @@ async def handle_learn(update: Update, context: ContextTypes.DEFAULT_TYPE):
             lines.append(f"  Applied: {h['applied']}")
             lines.append("")
 
-        await update.message.reply_text("\n".join(lines))
+        await reply(update, "\n".join(lines))
 
     else:
-        await update.message.reply_text(f"Unknown action: {action}. Use stats/retrain/history.")
+        await reply(update, f"Unknown action: {action}. Use stats/retrain/history.")
 
 
 async def handle_strategy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text(
+        await reply(update, 
             "Usage:\n"
             "/strategy auto - Auto-select strategies\n"
             "/strategy grid|dca|rsi_ema|mtf - Fixed strategy"
@@ -478,16 +483,16 @@ async def handle_strategy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     strategy_manager = context.application.bot_data.get("strategy_manager")
 
     if not strategy_manager:
-        await update.message.reply_text("Strategy Manager not initialized.")
+        await reply(update, "Strategy Manager not initialized.")
         return
 
     strategy_manager.set_active(name)
-    await update.message.reply_text(f"Strategy mode: {'auto' if strategy_manager.auto_mode else strategy_manager.active_name}")
+    await reply(update, f"Strategy mode: {'auto' if strategy_manager.auto_mode else strategy_manager.active_name}")
 
 
 async def handle_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text(
+        await reply(update, 
             "Usage:\n"
             "/mode testnet - Switch to testnet\n"
             "/mode mainnet - Switch to mainnet"
@@ -496,7 +501,7 @@ async def handle_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     mode = context.args[0].lower()
     if mode not in ("testnet", "mainnet"):
-        await update.message.reply_text("Invalid mode. Use testnet or mainnet.")
+        await reply(update, "Invalid mode. Use testnet or mainnet.")
         return
 
     os.environ["BINANCE_TESTNET"] = "true" if mode == "testnet" else "false"
@@ -509,31 +514,32 @@ async def handle_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     context.application.bot_data["binance"] = new_client
 
-    await update.message.reply_text(f"Mode switched to: {mode.upper()}")
+    await reply(update, f"Mode switched to: {mode.upper()}")
 
 
 async def handle_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "Trading:\n"
-        "/init <amount> - Set starting capital\n"
-        "/buy <coin> <amount> - Buy in USDT\n"
-        "/sell <coin> <qty> - Sell quantity\n"
-        "/sell_all <coin> - Sell all position\n\n"
-        "Information:\n"
-        "/balance - Account balance\n"
-        "/capital - Capital info\n"
-        "/positions - Open positions\n"
-        "/stats - Trading statistics\n"
-        "/pnl - Profit/Loss\n"
-        "/price <coin> - Current price\n"
-        "/fees - Total fees paid\n\n"
-        "Management:\n"
-        "/status - Bot status\n"
-        "/pairs - Active pairs\n"
-        "/mode testnet|mainnet - Switch mode\n"
+    await reply(update, 
+        "🤖 Помощь\n\n"
+        "💰 Торговля:\n"
+        "/init <сумма> - Установить стартовый капитал\n"
+        "/buy <монета> <сумма> - Купить в USDT\n"
+        "/sell <монета> <кол> - Продать количество\n"
+        "/sell_all <монета> - Продать всю позицию\n\n"
+        "📊 Информация:\n"
+        "/balance - Баланс аккаунта\n"
+        "/capital - Информация о капитале\n"
+        "/positions - Открытые позиции\n"
+        "/stats - Статистика торговли\n"
+        "/pnl - Прибыль/Убыток\n"
+        "/price <монета> - Текущая цена\n"
+        "/fees - Общие комиссии\n\n"
+        "⚙️ Управление:\n"
+        "/status - Статус бота\n"
+        "/pairs - Активные пары\n"
+        "/mode testnet|mainnet - Переключить режим\n"
         "/strategy auto|grid|dca|rsi_ema|mtf\n\n"
-        "Learning:\n"
+        "🧠 Обучение:\n"
         "/rl on|off|status|train\n"
-        "/learn stats|retrain|history\n\n"
-        "/help - This message"
+        "/learn stats|retrain|history"
+        + COMMANDS_FOOTER
     )
