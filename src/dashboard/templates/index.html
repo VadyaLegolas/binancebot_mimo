@@ -334,20 +334,11 @@
         <div class="grid">
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">Текущий баланс</span>
+                    <span class="card-title">Реальный баланс</span>
                     <div class="card-icon">💰</div>
                 </div>
                 <div class="stat-value" id="starting">--</div>
-                <div class="stat-change" id="starting-change">Капитал с учётом сделок</div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">Текущий баланс</span>
-                    <div class="card-icon">📈</div>
-                </div>
-                <div class="stat-value" id="balance">--</div>
-                <div class="stat-change" id="balance-change">--</div>
+                <div class="stat-change" id="starting-change">Баланс Binance</div>
             </div>
 
             <div class="card">
@@ -554,7 +545,21 @@
                 if (balRes.ok) {
                     const bal = await balRes.json();
                     if (bal.usdt !== undefined) {
-                        document.getElementById('balance').textContent = bal.usdt.toFixed(2) + ' USDT';
+                        const startingEl = document.getElementById('starting');
+                        const realBalance = bal.usdt;
+                        const startingCapital = 100; // Starting capital
+                        const profit = realBalance - startingCapital;
+                        const profitSign = profit >= 0 ? '+' : '';
+                        
+                        startingEl.textContent = realBalance.toFixed(2) + ' USDT (' + profitSign + profit.toFixed(2) + ')';
+                        
+                        if (realBalance > startingCapital) {
+                            startingEl.style.color = 'var(--success)';
+                        } else if (realBalance < startingCapital) {
+                            startingEl.style.color = 'var(--danger)';
+                        } else {
+                            startingEl.style.color = 'var(--text-primary)';
+                        }
                     }
                 }
 
