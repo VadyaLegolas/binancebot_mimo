@@ -11,7 +11,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 load_dotenv()
 
 logger.remove()
-logger.add(sys.stderr, level=os.getenv("LOG_LEVEL", "INFO"), format="{message}")
+logger.add(sys.stderr, level=os.getenv("LOG_LEVEL", "INFO"), 
+    format="<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | {message}")
 logger.add("logs/bot.log", rotation="10 MB", retention="7 days", level="DEBUG")
 
 
