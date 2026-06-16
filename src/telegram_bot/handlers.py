@@ -335,15 +335,52 @@ async def handle_sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
         fill_qty = float(order["executedQty"])
         sell_amount = fill_qty * fill_price
 
-        await reply(update, 
-            f"╔══════════════════════╗\n"
-            f"║  🔴 ПРОДАЖА {symbol}  ║\n"
-            f"╚══════════════════════╝\n\n"
-            f"📦 Количество: {fill_qty}\n"
-            f"💰 Цена: ${fill_price:,.2f}\n"
-            f"💵 Сумма: ${sell_amount:,.2f}\n"
-            f"📋 Ордер: #{order['orderId']}"
-        )
+        # Find and close the matching open trade
+        db = SessionLocal()
+        try:
+            open_trade = db.query(Trade).filter(
+                Trade.symbol == symbol,
+                Trade.side == "BUY",
+                Trade.status == "OPEN",
+            ).order_by(Trade.opened_at).first()
+
+            if open_trade:
+                # Calculate PnL
+                from src.core.capital import calc_pnl
+                pnl = calc_pnl(open_trade.price, fill_price, open_trade.quantity)
+                
+                open_trade.status = "CLOSED"
+                open_trade.closed_at = datetime.utcnow()
+                open_trade.fee_sell = fill_qty * fill_price * 0.001
+                open_trade.fee_total = open_trade.fee_buy + open_trade.fee_sell
+                open_trade.gross_pnl = pnl["gross_pnl"]
+                open_trade.net_pnl = pnl["net_pnl"]
+                open_trade.net_pnl_pct = pnl["net_pnl_pct"]
+                db.commit()
+                
+                await reply(update, 
+                    f"╔══════════════════════╗\n"
+                    f"║  🔴 ПРОДАЖА {symbol}  ║\n"
+                    f"╚══════════════════════╝\n\n"
+                    f"📦 Количество: {fill_qty}\n"
+                    f"💰 Цена: ${fill_price:,.2f}\n"
+                    f"💵 Сумма: ${sell_amount:,.2f}\n"
+                    f"📊 PnL: ${pnl['net_pnl']:.2f} ({pnl['net_pnl_pct']:.2f}%)\n"
+                    f"📋 Ордер: #{order['orderId']}"
+                )
+            else:
+                await reply(update, 
+                    f"╔══════════════════════╗\n"
+                    f"║  🔴 ПРОДАЖА {symbol}  ║\n"
+                    f"╚══════════════════════╝\n\n"
+                    f"📦 Количество: {fill_qty}\n"
+                    f"💰 Цена: ${fill_price:,.2f}\n"
+                    f"💵 Сумма: ${sell_amount:,.2f}\n"
+                    f"📋 Ордер: #{order['orderId']}"
+                )
+        finally:
+            db.close()
+
     except Exception as e:
         await reply(update, f"Error placing sell order: {e}")
 
@@ -356,23 +393,50 @@ async def handle_sell_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
     symbol = context.args[0].upper()
     try:
         binance = get_binance(context.application)
-        account = binance.client.get_account()
+        account = binance._request_with_retry(binance.client.get_account)
 
         for balance in account["balances"]:
             if balance["asset"] == symbol and float(balance["free"]) > 0:
                 qty = float(balance["free"])
                 order = binance.place_market_sell(symbol, qty)
                 
-                sell_price = float(order['price'])
-                sell_amount = qty * sell_price
-                
+                fill_price = float(order["fills"][0]["price"]) if order.get("fills") else float(order.get("price", 0))
+                fill_qty = float(order["executedQty"])
+                sell_amount = fill_qty * fill_price
+
+                # Close all open trades for this symbol
+                db = SessionLocal()
+                try:
+                    open_trades = db.query(Trade).filter(
+                        Trade.symbol == symbol,
+                        Trade.side == "BUY",
+                        Trade.status == "OPEN",
+                    ).all()
+
+                    total_pnl = 0
+                    for t in open_trades:
+                        from src.core.capital import calc_pnl
+                        pnl = calc_pnl(t.price, fill_price, t.quantity)
+                        t.status = "CLOSED"
+                        t.closed_at = datetime.utcnow()
+                        t.fee_sell = t.quantity * fill_price * 0.001
+                        t.fee_total = t.fee_buy + t.fee_sell
+                        t.gross_pnl = pnl["gross_pnl"]
+                        t.net_pnl = pnl["net_pnl"]
+                        t.net_pnl_pct = pnl["net_pnl_pct"]
+                        total_pnl += pnl["net_pnl"]
+                    db.commit()
+                finally:
+                    db.close()
+
                 await reply(update, 
                     f"╔══════════════════════╗\n"
                     f"║  🔴 ПРОДАЖА ВСЕ {symbol}  ║\n"
                     f"╚══════════════════════╝\n\n"
-                    f"📦 Количество: {qty}\n"
-                    f"💰 Цена: ${sell_price:,.2f}\n"
-                    f"💵 Сумма: ${sell_amount:,.2f}"
+                    f"📦 Количество: {fill_qty}\n"
+                    f"💰 Цена: ${fill_price:,.2f}\n"
+                    f"💵 Сумма: ${sell_amount:,.2f}\n"
+                    f"📊 Итого PnL: ${total_pnl:.2f}"
                 )
                 return
 
