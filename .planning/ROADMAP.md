@@ -57,32 +57,36 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | Phase 1 | Done |
-| INFRA-02 | Phase 1 | Done |
-| INFRA-03 | Phase 1 | Done |
-| INFRA-04 | Phase 1 | Done |
-| INFRA-05 | Phase 1 | Done |
-| BNCA-01 | Phase 1 | Done |
-| BNCA-02 | Phase 1 | Done |
-| BNCA-03 | Phase 1 | Done |
-| BNCA-04 | Phase 1 | Done |
-| BNCA-05 | Phase 1 | Done |
-| DB-01 | Phase 1 | Done |
-| DB-02 | Phase 1 | Done |
-| DB-03 | Phase 1 | Done |
-| DB-04 | Phase 1 | Done |
-| CAP-01 | Phase 1 | Done |
-| CAP-02 | Phase 1 | Done |
-| CAP-03 | Phase 1 | Done |
-| TGB-01 | Phase 1 | Done |
-| TGB-02 | Phase 1 | Done |
-| TGB-03 | Phase 1 | Done |
-| TGB-05 | Phase 1 | Done |
-| DASH-01 | Phase 1 | Done |
-| DASH-02 | Phase 1 | Done |
-| DASH-03 | Phase 1 | Done |
-| DASH-04 | Phase 1 | Done |
-| PAIR-01 | Phase 1 | Done |
+| INFRA-01 | Phase 1 | Pending |
+| INFRA-02 | Phase 1 | Pending |
+| INFRA-03 | Phase 1 | Pending |
+| INFRA-04 | Phase 1 | Pending |
+| INFRA-05 | Phase 1 | Pending |
+| BNCA-01 | Phase 1 | Pending |
+| BNCA-02 | Phase 1 | Pending |
+| BNCA-03 | Phase 1 | Pending |
+| BNCA-04 | Phase 1 | Pending |
+| BNCA-05 | Phase 1 | Pending |
+| DB-01 | Phase 1 | Pending |
+| DB-02 | Phase 1 | Pending |
+| DB-03 | Phase 1 | Pending |
+| DB-04 | Phase 1 | Pending |
+| CAP-01 | Phase 1 | Pending |
+| CAP-02 | Phase 1 | Pending |
+| CAP-03 | Phase 1 | Pending |
+| TGB-01 | Phase 1 | Pending |
+| TGB-02 | Phase 1 | Pending |
+| TGB-03 | Phase 1 | Pending |
+| TGB-05 | Phase 1 | Pending |
+| DASH-01 | Phase 1 | Pending |
+| DASH-02 | Phase 1 | Pending |
+| DASH-03 | Phase 1 | Pending |
+| DASH-04 | Phase 1 | Pending |
+| PAIR-01 | Phase 1 | Pending |
+| STRAT-01 | Phase 2 | Pending |
+| STRAT-02 | Phase 2 | Pending |
+| STRAT-03 | Phase 2 | Pending |
+| STRAT-04 | Phase 2 | Pending |
 | STRAT-01 | Phase 2 | Done |
 | STRAT-02 | Phase 2 | Done |
 | STRAT-03 | Phase 2 | Done |
@@ -92,15 +96,15 @@
 | RISK-02 | Phase 2 | Done |
 | RISK-03 | Phase 2 | Done |
 | RISK-04 | Phase 2 | Done |
-| LRN-01 | Phase 3 | Pending |
-| LRN-02 | Phase 3 | Pending |
-| LRN-03 | Phase 3 | Pending |
-| LRN-04 | Phase 3 | Pending |
-| LRN-05 | Phase 3 | Pending |
-| TGB-04 | Phase 3 | Pending |
-| DASH-05 | Phase 3 | Pending |
-| PAIR-02 | Phase 3 | Pending |
-| PAIR-03 | Phase 3 | Pending |
+| LRN-01 | Phase 3 | Done |
+| LRN-02 | Phase 3 | Done |
+| LRN-03 | Phase 3 | Done |
+| LRN-04 | Phase 3 | Done |
+| LRN-05 | Phase 3 | Done |
+| TGB-04 | Phase 3 | Done |
+| DASH-05 | Phase 3 | Done |
+| PAIR-02 | Phase 3 | Done |
+| PAIR-03 | Phase 3 | Done |
 
 **Coverage:**
 - v1 requirements: 38 total
@@ -109,4 +113,4 @@
 
 ---
 *Created: 2026-06-16*
-*Last updated: 2026-06-16 after Phase 1 completion*
+*Last updated: 2026-06-16 after roadmap creation*

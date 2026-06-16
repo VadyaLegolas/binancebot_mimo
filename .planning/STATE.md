@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-06-16)
 
 **Core value:** Бот должен автоматически торговать на Binance с учётом комиссий, корректно считать PnL (нетто) и позволять пользователю управлять всем через Telegram.
-**Current focus:** Phase 1 — Основа
+**Current focus:** Phase 4 — Полировка
 
 ## Workflow
 
@@ -23,16 +23,17 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| Phase 1: Основа | In Progress (4 plans, 17 tasks) | 100% |
+| Phase 1: Основа | Done (4 plans, 17 tasks) | 100% |
 | Phase 2: Стратегии | Done (4 plans, 17 tasks) | 100% |
-| Phase 3: Learning Engine | Planned (4 plans, 17 tasks) | 0% |
-| Phase 4: Полировка | Blocked by Phase 3 | 0% |
+| Phase 3: Learning Engine | Done (4 plans, 17 tasks) | 100% |
+| Phase 4: Полировка | Pending | 0% |
 
 ## Decisions Log
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
 | 2026-06-16 | v2 спека как авторитетная | v1 устарела, v2 включает Learning Engine |
+| 2026-06-16 | Indicators on pure pandas/numpy | pandas-ta incompatible with Python 3.14 |
 
 ## Active Blockers
 
@@ -42,8 +43,10 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 - Стартовый файл: binance_bot_spec_v2.md
 - AGENTS.md уже создан в корне проекта
-- Git репозиторий инициализирован
+- Git репозиторий: https://github.com/VadyaLegolas/binancebot_mimo
+- PR #1: Phase 1 fixes (merged/pending)
+- PR #2: Phase 2 strategies (open)
 
 ---
 *Created: 2026-06-16*
-*Last updated: 2026-06-16*
+*Last updated: 2026-06-16 after Phase 3 completion*
