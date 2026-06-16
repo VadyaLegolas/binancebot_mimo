@@ -1,4 +1,8 @@
+import logging
 from src.dashboard.routes import create_dash_app
+
+# Suppress Flask access logs
+logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
 
 def run_dashboard():

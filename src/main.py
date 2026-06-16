@@ -131,6 +131,9 @@ def setup_scheduler(strategy_manager, tuner, weighter, rl_agent, guard) -> Backg
 
 
 def run_flask(config, tuner, weighter, rl_agent, guard):
+    import logging
+    logging.getLogger('werkzeug').setLevel(logging.WARNING)
+    
     from src.dashboard.app import create_dash_app
     app = create_dash_app()
     app.config["tuner"] = tuner
