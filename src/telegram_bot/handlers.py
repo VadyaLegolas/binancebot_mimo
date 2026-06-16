@@ -10,14 +10,18 @@ from src.core.constants import CORE_PAIRS, MIN_TRADE_USDT
 from datetime import datetime
 
 
-def create_bot_app() -> Application:
+def create_bot_app(binance_client=None) -> Application:
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
         raise ValueError("TELEGRAM_BOT_TOKEN not set")
 
     application = Application.builder().token(token).build()
 
+    if binance_client:
+        application.bot_data["binance"] = binance_client
+
     application.add_handler(CommandHandler("start", handle_start))
+    application.add_handler(CommandHandler("help", handle_help))
     application.add_handler(CommandHandler("init", handle_init))
     application.add_handler(CommandHandler("balance", handle_balance))
     application.add_handler(CommandHandler("capital", handle_capital))
@@ -31,6 +35,10 @@ def create_bot_app() -> Application:
     application.add_handler(CommandHandler("pairs", handle_pairs))
     application.add_handler(CommandHandler("status", handle_status))
     application.add_handler(CommandHandler("fees", handle_fees))
+    application.add_handler(CommandHandler("mode", handle_mode))
+    application.add_handler(CommandHandler("rl", handle_rl))
+    application.add_handler(CommandHandler("learn", handle_learn))
+    application.add_handler(CommandHandler("strategy", handle_strategy))
 
     return application
 
@@ -326,3 +334,206 @@ async def handle_fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"💸 Total Fees Paid: -{fees_sum:.2f} USDT")
     finally:
         db.close()
+
+
+async def handle_rl(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/rl on - Enable live trading\n"
+            "/rl off - Switch to shadow mode\n"
+            "/rl status - Show RL agent status\n"
+            "/rl train - Train on current data"
+        )
+        return
+
+    action = context.args[0].lower()
+    rl_agent = context.application.bot_data.get("rl_agent")
+
+    if not rl_agent:
+        await update.message.reply_text("RL Agent not initialized.")
+        return
+
+    if action == "on":
+        rl_agent.set_mode("live")
+        await update.message.reply_text("RL Agent: LIVE mode enabled.")
+
+    elif action == "off":
+        rl_agent.set_mode("shadow")
+        await update.message.reply_text("RL Agent: SHADOW mode. Observing only.")
+
+    elif action == "status":
+        status = rl_agent.get_status()
+        await update.message.reply_text(
+            f"RL Agent Status\n\n"
+            f"Mode: {status['mode']}\n"
+            f"Model: {'loaded' if status['model_loaded'] else 'not trained'}\n"
+            f"Last train: {status['last_train'] or 'never'}\n"
+            f"Consecutive losses: {status['consecutive_losses']}\n"
+            f"Should retrain: {'yes' if status['should_retrain'] else 'no'}"
+        )
+
+    elif action == "train":
+        await update.message.reply_text("Training RL agent...")
+        try:
+            result = rl_agent.train(steps=5000)
+            await update.message.reply_text(
+                f"Training complete!\n"
+                f"Mean reward: {result['mean_reward']:.2f}\n"
+                f"Steps: {result['steps']}"
+            )
+        except Exception as e:
+            await update.message.reply_text(f"Training failed: {e}")
+
+    else:
+        await update.message.reply_text(f"Unknown action: {action}. Use on/off/status/train.")
+
+
+async def handle_learn(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/learn stats - Show learning statistics\n"
+            "/learn retrain - Force retrain weights\n"
+            "/learn history <strategy> - Show param history"
+        )
+        return
+
+    action = context.args[0].lower()
+
+    if action == "stats":
+        tuner = context.application.bot_data.get("tuner")
+        weighter = context.application.bot_data.get("weighter")
+        rl_agent = context.application.bot_data.get("rl_agent")
+        guard = context.application.bot_data.get("guard")
+
+        lines = ["Learning Engine Status\n"]
+
+        if tuner:
+            ts = tuner.get_status()
+            lines.append("Parameter Tuner:")
+            for strat, count in ts["last_optimization"].items():
+                lines.append(f"  {strat}: last at trade #{count}")
+
+        if weighter:
+            ws = weighter.get_status()
+            lines.append("\nStrategy Weights:")
+            for name, w in ws["weights"].items():
+                lines.append(f"  {name}: {w:.2f}")
+            lines.append(f"  Primary: {ws['primary_strategy']}")
+
+        if rl_agent:
+            rs = rl_agent.get_status()
+            lines.append(f"\nRL Agent: {rs['mode']}")
+
+        if guard:
+            anomalies = guard.check_all()
+            lines.append(f"\nAnomaly Guard: {len(anomalies)} active issues")
+            for a in anomalies:
+                lines.append(f"  [{a['type']}] {a['message']}")
+
+        await update.message.reply_text("\n".join(lines))
+
+    elif action == "retrain":
+        weighter = context.application.bot_data.get("weighter")
+        if weighter:
+            await update.message.reply_text("Retraining strategy weights...")
+            weights = weighter.update()
+            await update.message.reply_text(f"Updated weights: {weights}")
+        else:
+            await update.message.reply_text("Strategy Weighter not initialized.")
+
+    elif action == "history":
+        strategy = context.args[1] if len(context.args) > 1 else "grid"
+        from src.learning.model_store import get_param_history
+        history = get_param_history(strategy)
+        if not history:
+            await update.message.reply_text(f"No param history for {strategy}")
+            return
+
+        lines = [f"Param History: {strategy}\n"]
+        for h in history[:5]:
+            lines.append(f"#{h['id']} ({h['created_at'][:16]})")
+            if h["sharpe_before"] and h["sharpe_after"]:
+                lines.append(f"  Sharpe: {h['sharpe_before']:.2f} -> {h['sharpe_after']:.2f}")
+            lines.append(f"  Applied: {h['applied']}")
+            lines.append("")
+
+        await update.message.reply_text("\n".join(lines))
+
+    else:
+        await update.message.reply_text(f"Unknown action: {action}. Use stats/retrain/history.")
+
+
+async def handle_strategy(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/strategy auto - Auto-select strategies\n"
+            "/strategy grid|dca|rsi_ema|mtf - Fixed strategy"
+        )
+        return
+
+    name = context.args[0].lower()
+    strategy_manager = context.application.bot_data.get("strategy_manager")
+
+    if not strategy_manager:
+        await update.message.reply_text("Strategy Manager not initialized.")
+        return
+
+    strategy_manager.set_active(name)
+    await update.message.reply_text(f"Strategy mode: {'auto' if strategy_manager.auto_mode else strategy_manager.active_name}")
+
+
+async def handle_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/mode testnet - Switch to testnet\n"
+            "/mode mainnet - Switch to mainnet"
+        )
+        return
+
+    mode = context.args[0].lower()
+    if mode not in ("testnet", "mainnet"):
+        await update.message.reply_text("Invalid mode. Use testnet or mainnet.")
+        return
+
+    os.environ["BINANCE_TESTNET"] = "true" if mode == "testnet" else "false"
+
+    from src.core.binance_client import BinanceClient
+    new_client = BinanceClient(
+        os.getenv("BINANCE_API_KEY", ""),
+        os.getenv("BINANCE_API_SECRET", ""),
+        testnet=(mode == "testnet"),
+    )
+    context.application.bot_data["binance"] = new_client
+
+    await update.message.reply_text(f"Mode switched to: {mode.upper()}")
+
+
+async def handle_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "Trading:\n"
+        "/init <amount> - Set starting capital\n"
+        "/buy <coin> <amount> - Buy in USDT\n"
+        "/sell <coin> <qty> - Sell quantity\n"
+        "/sell_all <coin> - Sell all position\n\n"
+        "Information:\n"
+        "/balance - Account balance\n"
+        "/capital - Capital info\n"
+        "/positions - Open positions\n"
+        "/stats - Trading statistics\n"
+        "/pnl - Profit/Loss\n"
+        "/price <coin> - Current price\n"
+        "/fees - Total fees paid\n\n"
+        "Management:\n"
+        "/status - Bot status\n"
+        "/pairs - Active pairs\n"
+        "/mode testnet|mainnet - Switch mode\n"
+        "/strategy auto|grid|dca|rsi_ema|mtf\n\n"
+        "Learning:\n"
+        "/rl on|off|status|train\n"
+        "/learn stats|retrain|history\n\n"
+        "/help - This message"
+    )
