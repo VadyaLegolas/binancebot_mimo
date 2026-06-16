@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| Phase 1: Основа | Planned (4 plans, 17 tasks) | 0% |
-| Phase 2: Стратегии | Planned (4 plans, 17 tasks) | 0% |
-| Phase 3: Learning Engine | Blocked by Phase 2 | 0% |
+| Phase 1: Основа | In Progress (4 plans, 17 tasks) | 100% |
+| Phase 2: Стратегии | Done (4 plans, 17 tasks) | 100% |
+| Phase 3: Learning Engine | Planned (4 plans, 17 tasks) | 0% |
 | Phase 4: Полировка | Blocked by Phase 3 | 0% |
 
 ## Decisions Log
