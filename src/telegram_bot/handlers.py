@@ -1,5 +1,5 @@
 import os
-from telegram import Update
+from telegram import Update, BotCommand
 from telegram.ext import Application, CommandHandler, ContextTypes
 from loguru import logger
 from src.core.binance_client import BinanceClient
@@ -9,37 +9,10 @@ from src.database.models import Trade, BotSession
 from src.core.constants import CORE_PAIRS, MIN_TRADE_USDT
 from datetime import datetime
 
-COMMANDS_FOOTER = (
-    "\n\n━━━━━━━━━━━━━━━━━━━━\n"
-    "📌 Доступные команды:\n\n"
-    "💰 Торговля:\n"
-    "  /init <сумма> — стартовый капитал\n"
-    "  /buy <монета> <сумма> — купить\n"
-    "  /sell <монета> <кол> — продать\n"
-    "  /sell_all <монета> — продать всё\n\n"
-    "📊 Информация:\n"
-    "  /balance — баланс\n"
-    "  /capital — капитал\n"
-    "  /positions — позиции\n"
-    "  /stats — статистика\n"
-    "  /pnl — прибыль\n"
-    "  /fees — комиссии\n"
-    "  /price <монета> — цена\n\n"
-    "⚙️ Управление:\n"
-    "  /status — статус\n"
-    "  /pairs — пары\n"
-    "  /mode — режим\n"
-    "  /strategy — стратегия\n\n"
-    "🧠 Обучение:\n"
-    "  /rl — RL-агент\n"
-    "  /learn — обучение\n"
-    "  /help — помощь"
-)
-
 
 async def reply(update, text):
-    """Ответить с закреплёнными командами."""
-    await update.message.reply_text(text + COMMANDS_FOOTER)
+    """Ответить пользователю."""
+    await update.message.reply_text(text)
 
 
 def create_bot_app(binance_client=None) -> Application:
@@ -75,6 +48,33 @@ def create_bot_app(binance_client=None) -> Application:
     return application
 
 
+async def set_bot_commands(application: Application):
+    """Установить меню команд в Telegram."""
+    commands = [
+        BotCommand("start", "Запуск бота"),
+        BotCommand("help", "Помощь"),
+        BotCommand("init", "Установить капитал"),
+        BotCommand("buy", "Купить монету"),
+        BotCommand("sell", "Продать монету"),
+        BotCommand("sell_all", "Продать всё"),
+        BotCommand("balance", "Баланс аккаунта"),
+        BotCommand("capital", "Информация о капитале"),
+        BotCommand("positions", "Открытые позиции"),
+        BotCommand("stats", "Статистика"),
+        BotCommand("pnl", "Прибыль/убыток"),
+        BotCommand("price", "Текущая цена"),
+        BotCommand("fees", "Комиссии"),
+        BotCommand("status", "Статус бота"),
+        BotCommand("pairs", "Активные пары"),
+        BotCommand("mode", "Режим testnet/mainnet"),
+        BotCommand("strategy", "Выбор стратегии"),
+        BotCommand("rl", "RL-агент"),
+        BotCommand("learn", "Обучение"),
+    ]
+    await application.bot.set_my_commands(commands)
+    logger.info("Меню команд установлено")
+
+
 def get_binance(app: Application) -> BinanceClient:
     if "binance" not in app.bot_data:
         api_key = os.getenv("BINANCE_API_KEY", "")
@@ -85,6 +85,9 @@ def get_binance(app: Application) -> BinanceClient:
 
 
 async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Установить меню команд
+    await set_bot_commands(context.application)
+    
     await reply(update, 
         "╔══════════════════════╗\n"
         "║  🤖 Binance Bot v2.0  ║\n"
@@ -604,5 +607,6 @@ async def handle_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "  /strategy auto|grid|dca|rsi_ema|mtf\n\n"
         "🧠 ОБУЧЕНИЕ:\n"
         "  /rl on|off|status|train\n"
-        "  /learn stats|retrain|history"
+        "  /learn stats|retrain|history\n\n"
+        "📌 Команды доступны в меню бота"
     )
