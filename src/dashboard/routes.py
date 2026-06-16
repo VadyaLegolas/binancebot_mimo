@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, render_template, jsonify
+from flask import Flask, Blueprint, render_template, jsonify, make_response
 from src.core.capital import get_capital_info
 from src.database.session import SessionLocal
 from src.database.models import Trade
@@ -9,7 +9,9 @@ bp = Blueprint("dashboard", __name__)
 
 @bp.route("/")
 def index():
-    return render_template("index.html")
+    response = make_response(render_template("index.html"))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    return response
 
 
 @bp.route("/health")
