@@ -93,23 +93,37 @@
         }
 
         .refresh-btn {
-            background: var(--bg-card);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
+            background: var(--accent);
+            color: #fff;
+            border: none;
             padding: 10px 20px;
             border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
             font-weight: 500;
-            transition: all 0.2s;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
         .refresh-btn:hover {
-            background: var(--bg-card-hover);
-            border-color: var(--accent);
+            background: #00b894;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3);
+        }
+
+        .refresh-btn:active {
+            transform: translateY(0);
+        }
+
+        .refresh-btn.loading svg {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         .grid {
@@ -479,6 +493,9 @@
         }
 
         async function refresh() {
+            const btn = document.querySelector('.refresh-btn');
+            btn.classList.add('loading');
+            
             try {
                 const balRes = await fetch('/api/balance');
                 if (balRes.ok) {
@@ -581,6 +598,8 @@
                 }
             } catch (e) {
                 console.error('Refresh error:', e);
+            } finally {
+                btn.classList.remove('loading');
             }
         }
 
