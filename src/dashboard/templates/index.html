@@ -563,13 +563,12 @@
                     realBalanceEl.textContent = realBalance.toFixed(2) + ' USDT (' + realPnlSign + realPnl.toFixed(2) + ')';
                     realBalanceEl.style.color = realPnl >= 0 ? 'var(--success)' : realPnl < 0 ? 'var(--danger)' : 'var(--text-primary)';
 
-                    // Баланс (стартовый + PnL от сделок)
+                    // Баланс = Реальный баланс (PnL = real - starting)
                     const startingEl = document.getElementById('starting');
-                    const currentBalance = cap.current_balance || 0;
                     const pnl = cap.net_pnl || 0;
                     const pnlSign = pnl >= 0 ? '+' : '';
                     
-                    startingEl.textContent = currentBalance.toFixed(2) + ' USDT (' + pnlSign + pnl.toFixed(2) + ')';
+                    startingEl.textContent = realBalance.toFixed(2) + ' USDT (' + pnlSign + pnl.toFixed(2) + ')';
                     startingEl.style.color = pnl >= 0 ? 'var(--success)' : pnl < 0 ? 'var(--danger)' : 'var(--text-primary)';
 
                     document.getElementById('pnl').textContent = pnlSign + pnl.toFixed(2) + ' USDT';
