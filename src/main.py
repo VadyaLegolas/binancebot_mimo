@@ -147,17 +147,34 @@ def setup_scheduler(strategy_manager, tuner, weighter, rl_agent, guard) -> Backg
     return scheduler
 
 
+_last_prices = {}
+
 def show_prices(binance_client):
-    """Показать текущие цены в терминале."""
+    """Показать текущие цены в терминале с изменением."""
+    global _last_prices
     pairs = ["BTC", "ETH", "SOL"]
-    prices = []
+    
+    logger.info("═══════════════════════════════════════")
+    logger.info("  📊 ТЕКУЩИЕ ЦЕНЫ")
+    logger.info("───────────────────────────────────────")
+    
     for symbol in pairs:
         try:
             price = binance_client.get_price(symbol)
-            prices.append(f"{symbol}: ${price:,.2f}")
+            prev = _last_prices.get(symbol)
+            if prev and prev > 0:
+                change = price - prev
+                change_pct = (change / prev) * 100
+                arrow = "📈" if change >= 0 else "📉"
+                sign = "+" if change >= 0 else ""
+                logger.info(f"  {arrow} {symbol}/USDT: ${price:,.2f} ({sign}{change_pct:.2f}%)")
+            else:
+                logger.info(f"  💰 {symbol}/USDT: ${price:,.2f}")
+            _last_prices[symbol] = price
         except Exception:
-            prices.append(f"{symbol}: --")
-    logger.info("Цены: " + " | ".join(prices))
+            logger.info(f"  ❓ {symbol}/USDT: загрузка...")
+    
+    logger.info("───────────────────────────────────────")
 
 
 def run_flask(config, tuner, weighter, rl_agent, guard, binance_client):
