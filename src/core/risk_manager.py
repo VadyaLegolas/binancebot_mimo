@@ -31,9 +31,9 @@ class RiskManager:
                 return False, f"Daily loss limit: {daily_pnl:.2f} USDT (limit: -{daily_limit:.2f})"
 
         if capital_info:
-            available = capital_info["current_balance"] - RESERVED_USDT
+            available = capital_info["balance"] - RESERVED_USDT
             if available < 0:
-                return False, f"Reserve buffer: balance {capital_info['current_balance']:.2f} < {RESERVED_USDT} USDT"
+                return False, f"Reserve buffer: balance {capital_info['balance']:.2f} < {RESERVED_USDT} USDT"
 
         now = datetime.utcnow()
         if symbol in self._cooldown_until:
