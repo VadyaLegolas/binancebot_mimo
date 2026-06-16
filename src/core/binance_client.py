@@ -96,6 +96,38 @@ class BinanceClient:
             logger.error(f"Binance API error placing market sell for {symbol}: {e.status_code} - {e.message}")
             raise
 
+    def place_limit_buy(self, symbol: str, price: float, quantity: float) -> dict:
+        try:
+            precision = self.quantity_precision(symbol)
+            price_precision = self.price_precision(symbol)
+            return self.client.create_order(
+                symbol=f"{symbol}USDT",
+                side=Client.SIDE_BUY,
+                type=Client.ORDER_TYPE_LIMIT,
+                timeInForce=Client.TIME_IN_FORCE_GTC,
+                quantity=round(quantity, precision),
+                price=round(price, price_precision),
+            )
+        except BinanceAPIException as e:
+            logger.error(f"Binance API error placing limit buy for {symbol}: {e.status_code} - {e.message}")
+            raise
+
+    def place_limit_sell(self, symbol: str, price: float, quantity: float) -> dict:
+        try:
+            precision = self.quantity_precision(symbol)
+            price_precision = self.price_precision(symbol)
+            return self.client.create_order(
+                symbol=f"{symbol}USDT",
+                side=Client.SIDE_SELL,
+                type=Client.ORDER_TYPE_LIMIT,
+                timeInForce=Client.TIME_IN_FORCE_GTC,
+                quantity=round(quantity, precision),
+                price=round(price, price_precision),
+            )
+        except BinanceAPIException as e:
+            logger.error(f"Binance API error placing limit sell for {symbol}: {e.status_code} - {e.message}")
+            raise
+
     def get_open_orders(self, symbol: str = None) -> list:
         try:
             return self.client.get_open_orders(symbol=f"{symbol}USDT" if symbol else None)

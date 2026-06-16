@@ -21,6 +21,7 @@ def create_bot_app(binance_client=None) -> Application:
         application.bot_data["binance"] = binance_client
 
     application.add_handler(CommandHandler("start", handle_start))
+    application.add_handler(CommandHandler("help", handle_help))
     application.add_handler(CommandHandler("init", handle_init))
     application.add_handler(CommandHandler("balance", handle_balance))
     application.add_handler(CommandHandler("capital", handle_capital))
@@ -34,6 +35,7 @@ def create_bot_app(binance_client=None) -> Application:
     application.add_handler(CommandHandler("pairs", handle_pairs))
     application.add_handler(CommandHandler("status", handle_status))
     application.add_handler(CommandHandler("fees", handle_fees))
+    application.add_handler(CommandHandler("mode", handle_mode))
     application.add_handler(CommandHandler("rl", handle_rl))
     application.add_handler(CommandHandler("learn", handle_learn))
     application.add_handler(CommandHandler("strategy", handle_strategy))
@@ -481,3 +483,57 @@ async def handle_strategy(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     strategy_manager.set_active(name)
     await update.message.reply_text(f"Strategy mode: {'auto' if strategy_manager.auto_mode else strategy_manager.active_name}")
+
+
+async def handle_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text(
+            "Usage:\n"
+            "/mode testnet - Switch to testnet\n"
+            "/mode mainnet - Switch to mainnet"
+        )
+        return
+
+    mode = context.args[0].lower()
+    if mode not in ("testnet", "mainnet"):
+        await update.message.reply_text("Invalid mode. Use testnet or mainnet.")
+        return
+
+    os.environ["BINANCE_TESTNET"] = "true" if mode == "testnet" else "false"
+
+    from src.core.binance_client import BinanceClient
+    new_client = BinanceClient(
+        os.getenv("BINANCE_API_KEY", ""),
+        os.getenv("BINANCE_API_SECRET", ""),
+        testnet=(mode == "testnet"),
+    )
+    context.application.bot_data["binance"] = new_client
+
+    await update.message.reply_text(f"Mode switched to: {mode.upper()}")
+
+
+async def handle_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "Trading:\n"
+        "/init <amount> - Set starting capital\n"
+        "/buy <coin> <amount> - Buy in USDT\n"
+        "/sell <coin> <qty> - Sell quantity\n"
+        "/sell_all <coin> - Sell all position\n\n"
+        "Information:\n"
+        "/balance - Account balance\n"
+        "/capital - Capital info\n"
+        "/positions - Open positions\n"
+        "/stats - Trading statistics\n"
+        "/pnl - Profit/Loss\n"
+        "/price <coin> - Current price\n"
+        "/fees - Total fees paid\n\n"
+        "Management:\n"
+        "/status - Bot status\n"
+        "/pairs - Active pairs\n"
+        "/mode testnet|mainnet - Switch mode\n"
+        "/strategy auto|grid|dca|rsi_ema|mtf\n\n"
+        "Learning:\n"
+        "/rl on|off|status|train\n"
+        "/learn stats|retrain|history\n\n"
+        "/help - This message"
+    )

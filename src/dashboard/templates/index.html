@@ -82,6 +82,26 @@
         </div>
 
         <div class="card">
+            <h2>Learning Engine</h2>
+            <div class="stat-grid">
+                <div class="stat">
+                    <div class="label">RL Mode</div>
+                    <div class="value" id="rl-mode">--</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Primary Strategy</div>
+                    <div class="value" id="primary-strategy">--</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Anomalies</div>
+                    <div class="value" id="anomaly-count">--</div>
+                </div>
+            </div>
+            <h3 style="margin-top: 15px; color: #e94560;">Strategy Weights</h3>
+            <div id="weights-container"></div>
+        </div>
+
+        <div class="card">
             <h2>📋 Recent Trades</h2>
             <table>
                 <thead>
@@ -144,6 +164,27 @@
                             <td>${t.status}</td>
                         </tr>
                     `).join('');
+                }
+
+                const learningRes = await fetch('/api/learning');
+                if (learningRes.ok) {
+                    const learning = await learningRes.json();
+                    if (learning.rl_agent) {
+                        document.getElementById('rl-mode').textContent = learning.rl_agent.mode;
+                    }
+                    if (learning.weighter) {
+                        document.getElementById('primary-strategy').textContent = learning.weighter.primary_strategy;
+                        const container = document.getElementById('weights-container');
+                        container.innerHTML = Object.entries(learning.weighter.weights).map(([name, weight]) =>
+                            '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #333;">' +
+                            '<span>' + name + '</span>' +
+                            '<span>' + (weight * 100).toFixed(1) + '%</span>' +
+                            '</div>'
+                        ).join('');
+                    }
+                    if (learning.anomalies) {
+                        document.getElementById('anomaly-count').textContent = learning.anomalies.length;
+                    }
                 }
             } catch (e) {
                 console.error('Refresh error:', e);
