@@ -11,7 +11,7 @@ import os
 WEIGHT_UPDATE_HOURS = 4
 MIN_SAMPLES = 20
 STRATEGY_NAMES = ["grid", "dca", "rsi_ema", "mtf"]
-MODEL_PATH = "data/strategy_weighter.pkl"
+MODEL_PATH = "data/strategy_weighter.json"
 
 
 class StrategyWeighter:
