@@ -12,6 +12,7 @@ class BotSession(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     starting_capital: Mapped[float] = mapped_column(Float, nullable=False)
+    initial_real_balance: Mapped[float] = mapped_column(Float, default=0.0)
     started_at: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
     mode: Mapped[str] = mapped_column(String(10), nullable=False)
     total_trades: Mapped[int] = mapped_column(Integer, default=0)

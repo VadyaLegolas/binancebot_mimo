@@ -117,20 +117,8 @@ async def handle_init(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Get real balance from Binance
         real_balance = binance.get_balance("USDT")
         
-        # Use the amount as starting capital
-        session = init_capital(amount, "testnet")
-        
-        # Save the real balance at init time
-        from src.database.session import SessionLocal
-        from src.database.models import BotSession
-        db = SessionLocal()
-        try:
-            session = db.query(BotSession).order_by(-BotSession.id).first()
-            if session:
-                session.max_balance = amount
-                db.commit()
-        finally:
-            db.close()
+        # Save starting capital and initial real balance
+        session = init_capital(amount, "testnet", real_balance)
 
         await reply(update, 
             f"╔══════════════════════╗\n"

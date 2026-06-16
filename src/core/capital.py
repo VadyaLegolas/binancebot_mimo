@@ -5,11 +5,12 @@ from src.database.models import BotSession, Trade
 from src.core.constants import FEE_RATE
 
 
-def init_capital(amount: float, mode: str = "testnet") -> BotSession:
+def init_capital(amount: float, mode: str = "testnet", initial_real_balance: float = 0.0) -> BotSession:
     db = SessionLocal()
     try:
         session = BotSession(
             starting_capital=amount,
+            initial_real_balance=initial_real_balance,
             started_at=datetime.utcnow(),
             mode=mode,
             total_trades=0,
@@ -81,7 +82,9 @@ def get_capital_info(binance_client=None) -> dict | None:
 
         return {
             "starting_capital": session.starting_capital,
+            "initial_real_balance": session.initial_real_balance,
             "real_balance": round(real_balance, 2),
+            "real_change": round(real_balance - session.initial_real_balance, 2),
             "balance": round(balance, 2),
             "net_pnl": round(net_pnl, 2),
             "unrealized_pnl": round(unrealized_pnl, 2),
