@@ -262,11 +262,11 @@ async def handle_buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
             db.close()
 
         await reply(update, 
-            f"✅ BUY {symbol}\n"
-            f"Amount: {amount:.2f} USDT\n"
-            f"Qty: {order['executedQty']}\n"
-            f"Price: {order['price']}\n"
-            f"Order ID: {order['orderId']}"
+            f"🟢 ПОКУПКА {symbol}\n"
+            f"Сумма: ${amount:.2f}\n"
+            f"Количество: {order['executedQty']}\n"
+            f"Цена: ${float(order['price']):,.2f}\n"
+            f"Ордер: #{order['orderId']}"
         )
     except Exception as e:
         await reply(update, f"Error placing buy order: {e}")
@@ -287,12 +287,16 @@ async def handle_sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         binance = get_binance(context.application)
         order = binance.place_market_sell(symbol, quantity)
+        
+        sell_price = float(order['price'])
+        sell_amount = quantity * sell_price
 
         await reply(update, 
-            f"✅ SELL {symbol}\n"
-            f"Qty: {quantity}\n"
-            f"Price: {order['price']}\n"
-            f"Order ID: {order['orderId']}"
+            f"🔴 ПРОДАЖА {symbol}\n"
+            f"Количество: {quantity}\n"
+            f"Цена: ${sell_price:,.2f}\n"
+            f"Сумма: ${sell_amount:,.2f}\n"
+            f"Ордер: #{order['orderId']}"
         )
     except Exception as e:
         await reply(update, f"Error placing sell order: {e}")
@@ -312,14 +316,19 @@ async def handle_sell_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if balance["asset"] == symbol and float(balance["free"]) > 0:
                 qty = float(balance["free"])
                 order = binance.place_market_sell(symbol, qty)
+                
+                sell_price = float(order['price'])
+                sell_amount = qty * sell_price
+                
                 await reply(update, 
-                    f"✅ SELL ALL {symbol}\n"
-                    f"Qty: {qty}\n"
-                    f"Price: {order['price']}"
+                    f"🔴 ПРОДАЖА ВСЕ {symbol}\n"
+                    f"Количество: {qty}\n"
+                    f"Цена: ${sell_price:,.2f}\n"
+                    f"Сумма: ${sell_amount:,.2f}"
                 )
                 return
 
-        await reply(update, f"No {symbol} balance found.")
+        await reply(update, f"Нет баланса {symbol}.")
     except Exception as e:
         await reply(update, f"Error: {e}")
 
