@@ -111,8 +111,27 @@ async def handle_init(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         binance = get_binance(context.application)
-        usdt = binance.get_balance("USDT")
-        await reply(update, f"💰 USDT Balance: {usdt:.2f}")
+        account = binance.client.get_account()
+        
+        balances = []
+        for balance in account["balances"]:
+            free = float(balance["free"])
+            locked = float(balance["locked"])
+            if free > 0 or locked > 0:
+                balances.append((balance["asset"], free, locked))
+        
+        if not balances:
+            await reply(update, "💰 Баланс пуст")
+            return
+        
+        lines = ["💰 Баланс аккаунта:\n"]
+        for asset, free, locked in sorted(balances, key=lambda x: -x[1]):
+            if locked > 0:
+                lines.append(f"  {asset}: {free:.6f} (заморожено: {locked:.6f})")
+            else:
+                lines.append(f"  {asset}: {free:.6f}")
+        
+        await reply(update, "\n".join(lines))
     except Exception as e:
         await reply(update, "⚠️ Не удалось получить баланс. Попробуйте позже.")
 
