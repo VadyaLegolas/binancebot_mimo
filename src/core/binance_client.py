@@ -74,7 +74,14 @@ class BinanceClient:
         for f in info["filters"]:
             if f["filterType"] == "LOT_SIZE":
                 step = float(f["stepSize"])
-                return len(str(step).rstrip("0").split(".")[-1]) if "." in str(step) else 0
+                # Handle scientific notation
+                if step >= 1:
+                    return 0
+                # Convert to decimal string without scientific notation
+                step_str = f"{step:.10f}".rstrip("0")
+                if "." in step_str:
+                    return len(step_str.split(".")[-1])
+                return 0
         return 8
 
     def price_precision(self, symbol: str) -> int:
@@ -82,7 +89,12 @@ class BinanceClient:
         for f in info["filters"]:
             if f["filterType"] == "PRICE_FILTER":
                 tick = float(f["tickSize"])
-                return len(str(tick).rstrip("0").split(".")[-1]) if "." in str(tick) else 0
+                if tick >= 1:
+                    return 0
+                tick_str = f"{tick:.10f}".rstrip("0")
+                if "." in tick_str:
+                    return len(tick_str.split(".")[-1])
+                return 0
         return 8
 
     def get_step_size(self, symbol: str) -> float:
