@@ -15,7 +15,7 @@ class AutoSelector:
         try:
             indicators = self._get_market_indicators(symbol)
         except Exception as e:
-            logger.error(f"AutoSelector: failed to get indicators for {symbol}: {e}")
+            logger.warning(f"AutoSelector: не удалось получить индикаторы для {symbol}, используется предыдущая стратегия")
             return self._current_strategy or "grid"
 
         adx = indicators["adx"]

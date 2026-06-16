@@ -6,7 +6,7 @@ from loguru import logger
 
 class BinanceClient:
     def __init__(self, api_key: str, api_secret: str, testnet: bool = True):
-        self.client = Client(api_key, api_secret, testnet=testnet)
+        self.client = Client(api_key, api_secret, testnet=testnet, requests_params={'timeout': 20})
         self.testnet = testnet
         self._symbol_info_cache = {}
         self._sync_time()
