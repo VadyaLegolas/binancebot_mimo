@@ -31,7 +31,7 @@ def api_capital():
 def api_trades():
     db = SessionLocal()
     try:
-        trades = db.query(Trade).order_by(-Trade.created_at).limit(100).all()
+        trades = db.query(Trade).order_by(Trade.id.desc()).limit(100).all()
         response = jsonify([{
             "id": t.id, "symbol": t.symbol, "side": t.side,
             "price": t.price, "quantity": t.quantity,
