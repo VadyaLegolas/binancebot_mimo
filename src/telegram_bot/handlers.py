@@ -113,13 +113,32 @@ async def handle_init(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         binance = get_binance(context.application)
-        mode = "testnet" if os.getenv("BINANCE_TESTNET", "true").lower() == "true" else "mainnet"
-        session = init_capital(amount, mode)
+        
+        # Get real balance from Binance
+        real_balance = binance.get_balance("USDT")
+        
+        # Use the amount as starting capital
+        session = init_capital(amount, "testnet")
+        
+        # Save the real balance at init time
+        from src.database.session import SessionLocal
+        from src.database.models import BotSession
+        db = SessionLocal()
+        try:
+            session = db.query(BotSession).order_by(-BotSession.id).first()
+            if session:
+                session.max_balance = amount
+                db.commit()
+        finally:
+            db.close()
 
         await reply(update, 
-            f"✅ Капитал установлен!\n\n"
-            f"💰 Сумма: {amount:.2f} USDT\n"
-            f"🔧 Режим: {mode}\n\n"
+            f"╔══════════════════════╗\n"
+            f"║  ✅ КАПИТАЛ УСТАНОВЛЕН  ║\n"
+            f"╚══════════════════════╝\n\n"
+            f"💰 Стартовый: {amount:.2f} USDT\n"
+            f"🏦 Реальный: {real_balance:.2f} USDT\n"
+            f"🔧 Режим: testnet\n\n"
             f"Готов к торговле!"
         )
     except ValueError:

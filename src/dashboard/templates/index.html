@@ -559,11 +559,11 @@
                     const realBalance = cap.real_balance || 0;
                     realBalanceEl.textContent = realBalance.toFixed(2) + ' USDT';
 
-                    // Баланс = стартовый капитал + PnL от сделок
+                    // Баланс = стартовый + PnL (равен реальному балансу)
                     const startingEl = document.getElementById('starting');
-                    const balance = cap.balance || 0;
                     const startingCapital = cap.starting_capital || 100;
                     const pnl = cap.net_pnl || 0;
+                    const balance = startingCapital + pnl;
                     const pnlSign = pnl >= 0 ? '+' : '';
                     startingEl.textContent = balance.toFixed(2) + ' USDT (' + pnlSign + pnl.toFixed(2) + ')';
                     startingEl.style.color = pnl >= 0 ? 'var(--success)' : pnl < 0 ? 'var(--danger)' : 'var(--text-primary)';
