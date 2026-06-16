@@ -1,38 +1,38 @@
 # Binance Trading Bot v2.0
 
-Autonomous self-learning trading bot for Binance with Telegram control and web dashboard.
+Автономный самообучающийся торговый бот для Binance с управлением через Telegram и веб-дашборд.
 
-## Features
+## Возможности
 
-- **4 Trading Strategies**: Grid, DCA, RSI+EMA, MTF Momentum
-- **AutoSelector**: Automatic strategy selection based on market conditions (ADX/RSI)
-- **Learning Engine**: Parameter optimization (Optuna), strategy weight learning (SGD), RL agent (PPO)
-- **Risk Management**: Max positions, daily loss limit, reserve buffer, cooldown, drawdown breaker
-- **Telegram Bot**: 17+ commands for trading, monitoring, and learning control
-- **Web Dashboard**: Real-time capital tracking, trade history, strategy metrics, learning status
+- **4 торговые стратегии**: Grid, DCA, RSI+EMA, MTF Momentum
+- **AutoSelector**: Автоматический выбор стратегии по рыночным условиям (ADX/RSI)
+- **Learning Engine**: Оптимизация параметров (Optuna), обучение весов стратегий (SGD), RL-агент (PPO)
+- **Управление рисками**: Максимум позиций, дневной лимит убытков, буфер резерва, кулдаун, стоп при просадке
+- **Telegram бот**: 17+ команд для торговли, мониторинга и управления обучением
+- **Веб-дашборд**: Отслеживание капитала в реальном времени, история сделок, метрики стратегий, статус обучения
 
-## Quick Start
+## Быстрый старт
 
-### Prerequisites
+### Требования
 - Python 3.11+
-- Binance Testnet account (API key + secret)
-- Telegram Bot Token (from @BotFather)
+- Аккаунт Binance Testnet (API ключ + секрет)
+- Токен Telegram бота (от @BotFather)
 
-### Installation
+### Установка
 
 ```bash
-# Clone repository
+# Клонирование репозитория
 git clone https://github.com/VadyaLegolas/binancebot_mimo.git
 cd binancebot_mimo
 
-# Install dependencies
+# Установка зависимостей
 pip install -r requirements.txt
 
-# Configure environment
+# Настройка окружения
 cp .env.example .env
-# Edit .env with your API keys
+# Отредактируйте .env с вашими API ключами
 
-# Run bot
+# Запуск бота
 python src/main.py
 ```
 
@@ -42,100 +42,106 @@ python src/main.py
 docker-compose up -d
 ```
 
-## Configuration
+## Конфигурация
 
-### Environment Variables (.env)
-- `BINANCE_API_KEY` - Binance API key
-- `BINANCE_API_SECRET` - Binance API secret
-- `BINANCE_TESTNET` - Use testnet (true/false)
-- `TELEGRAM_BOT_TOKEN` - Telegram bot token
-- `TELEGRAM_CHAT_ID` - Telegram chat ID for notifications
-- `DATABASE_URL` - Database connection string
+### Переменные окружения (.env)
+- `BINANCE_API_KEY` - API ключ Binance
+- `BINANCE_API_SECRET` - API секрет Binance
+- `BINANCE_TESTNET` - Использовать тестнет (true/false)
+- `TELEGRAM_BOT_TOKEN` - Токен Telegram бота
+- `TELEGRAM_CHAT_ID` - Chat ID Telegram для уведомлений
+- `DATABASE_URL` - Строка подключения к базе данных
 
-### Strategy Parameters (config.yaml)
-- `strategies.grid` - Grid trading parameters
-- `strategies.dca` - DCA parameters
-- `strategies.rsi_ema` - RSI+EMA parameters
-- `strategies.mtf` - MTF Momentum parameters
-- `risk` - Risk management settings
+### Параметры стратегий (config.yaml)
+- `strategies.grid` - Параметры Grid торговли
+- `strategies.dca` - Параметры DCA
+- `strategies.rsi_ema` - Параметры RSI+EMA
+- `strategies.mtf` - Параметры MTF Momentum
+- `risk` - Настройки управления рисками
 
-## Telegram Commands
+## Telegram команды
 
-### Trading
-- `/init <amount>` - Set starting capital
-- `/buy <coin> <amount>` - Buy in USDT
-- `/sell <coin> <qty>` - Sell quantity
-- `/sell_all <coin>` - Sell all position
+### Торговля
+- `/init <сумма>` - Установить стартовый капитал
+- `/buy <монета> <сумма>` - Купить в USDT
+- `/sell <монета> <кол>` - Продать количество
+- `/sell_all <монета>` - Продать всю позицию
 
-### Information
-- `/balance` - Account balance
-- `/capital` - Capital info
-- `/positions` - Open positions
-- `/stats` - Trading statistics
-- `/pnl` - Profit/Loss summary
-- `/price <coin>` - Current price
+### Информация
+- `/balance` - Баланс аккаунта
+- `/capital` - Информация о капитале
+- `/positions` - Открытые позиции
+- `/stats` - Статистика торговли
+- `/pnl` - Прибыль/Убыток
+- `/price <монета>` - Текущая цена
 
-### Learning
-- `/rl on|off|status|train` - RL agent control
-- `/learn stats|retrain|history` - Learning engine
-- `/strategy auto|grid|dca|rsi_ema|mtf` - Strategy selection
+### Управление
+- `/status` - Статус бота
+- `/pairs` - Активные пары
+- `/mode testnet|mainnet` - Переключение режима
+- `/strategy auto|grid|dca|rsi_ema|mtf` - Выбор стратегии
 
-## Architecture
+### Обучение
+- `/rl on|off|status|train` - Управление RL-агентом
+- `/learn stats|retrain|history` - Learning Engine
+- `/help` - Список всех команд
+
+## Архитектура
 
 ```
 src/
-├── main.py              # Entry point
+├── main.py              # Точка входа
 ├── core/
-│   ├── binance_client.py    # Binance API wrapper
-│   ├── capital.py           # Capital tracking
-│   ├── risk_manager.py      # Risk enforcement
-│   ├── pair_manager.py      # Dynamic pair expansion
-│   └── ws_manager.py        # WebSocket manager
+│   ├── binance_client.py    # Обертка Binance API
+│   ├── capital.py           # Отслеживание капитала
+│   ├── risk_manager.py      # Управление рисками
+│   ├── pair_manager.py      # Динамическое расширение пар
+│   └── ws_manager.py        # Менеджер WebSocket
 ├── strategies/
-│   ├── base.py              # Strategy base class
+│   ├── base.py              # Базовый класс стратегии
 │   ├── grid.py              # Grid Trading
 │   ├── dca.py               # DCA
 │   ├── rsi_ema.py           # RSI+EMA
 │   ├── mtf.py               # MTF Momentum
-│   ├── auto_selector.py     # Strategy routing
-│   └── manager.py           # Strategy orchestration
+│   ├── auto_selector.py     # Маршрутизация стратегий
+│   └── manager.py           # Оркестрация стратегий
 ├── learning/
-│   ├── parameter_tuner.py   # Optuna optimization
-│   ├── strategy_weighter.py # SGD weight learning
-│   ├── rl_agent.py          # PPO RL agent
-│   ├── trading_env.py       # Gymnasium environment
-│   ├── anomaly_guard.py     # Degradation detection
-│   └── model_store.py       # Model persistence
+│   ├── parameter_tuner.py   # Оптимизация Optuna
+│   ├── strategy_weighter.py # Обучение весов SGD
+│   ├── rl_agent.py          # PPO RL-агент
+│   ├── trading_env.py       # Среда Gymnasium
+│   ├── anomaly_guard.py     # Обнаружение деградации
+│   └── model_store.py       # Сохранение моделей
 ├── indicators/
 │   └── __init__.py          # RSI, EMA, ADX, ATR
 ├── database/
-│   ├── models.py            # SQLAlchemy models
-│   ├── session.py           # DB session
-│   └── migrations.py        # Table creation
+│   ├── models.py            # Модели SQLAlchemy
+│   ├── session.py           # Сессия БД
+│   └── migrations.py        # Создание таблиц
 ├── telegram_bot/
-│   ├── app.py               # Bot setup
-│   └── handlers.py          # Command handlers
+│   ├── app.py               # Настройка бота
+│   └── handlers.py          # Обработчики команд
 └── dashboard/
-    ├── app.py               # Flask app
-    ├── routes.py            # API endpoints
+    ├── app.py               # Приложение Flask
+    ├── routes.py            # API эндпоинты
     └── templates/
-        └── index.html       # Dashboard UI
+        └── index.html       # Интерфейс дашборда
 ```
 
-## Trading Pairs
+## Торговые пары
 
-- **Core (Day 1)**: BTC, ETH, SOL
-- **Extended (50+ trades)**: BNB, XRP, ADA
-- **DOGE (100+ wins, Grid only)**: DOGE
+- **Ядро (день 1)**: BTC, ETH, SOL
+- **Расширение (50+ сделок)**: BNB, XRP, ADA
+- **DOGE (100+ побед, только Grid)**: DOGE
 
-## Risk Management
+## Управление рисками
 
-- Max open positions: 7
-- Daily loss limit: 5% of capital
-- Reserve buffer: 20 USDT
-- Cooldown after stop-loss: 15 minutes
-- Drawdown breaker: 8% stops all trading
+- Максимум открытых позиций: 7
+- Дневной лимит убытков: 5% от капитала
+- Буфер резерва: 20 USDT
+- Кулдаун после стоп-лосс: 15 минут
+- Стоп при просадке: 8% останавливает всю торговлю
 
-## License
+## Лицензия
 
 MIT
