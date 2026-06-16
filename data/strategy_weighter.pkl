@@ -1,0 +1,9 @@
+{
+  "weights": {
+    "grid": 0.7,
+    "dca": 0.2,
+    "rsi_ema": 0.05,
+    "mtf": 0.05
+  },
+  "last_update": null
+}
