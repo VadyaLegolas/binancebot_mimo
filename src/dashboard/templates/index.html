@@ -523,8 +523,6 @@
             if (btn) btn.classList.add('loading');
             
             try {
-                console.log('Starting refresh...');
-                
                 const balRes = await fetch('/api/balance');
                 if (balRes.ok) {
                     const bal = await balRes.json();
@@ -532,7 +530,6 @@
                         document.getElementById('balance').textContent = bal.usdt.toFixed(2) + ' USDT';
                     }
                 }
-                console.log('Balance loaded');
 
                 const capRes = await fetch('/api/capital');
                 if (capRes.ok) {
@@ -553,7 +550,6 @@
                     document.getElementById('drawdown').textContent = (cap.drawdown_pct || 0).toFixed(2) + '%';
                     document.getElementById('open-pnl').textContent = ((cap.unrealized_pnl || 0) >= 0 ? '+' : '') + (cap.unrealized_pnl || 0).toFixed(2) + ' USDT';
                 }
-                console.log('Capital loaded');
 
                 const statsRes = await fetch('/api/stats');
                 if (statsRes.ok) {
@@ -562,13 +558,10 @@
                     document.getElementById('total-trades').textContent = stats.total_trades || 0;
                     document.getElementById('total-fees').textContent = '-' + (stats.total_fees || 0).toFixed(2);
                 }
-                console.log('Stats loaded');
 
                 const tradesRes = await fetch('/api/trades');
-                console.log('Trades response:', tradesRes.status);
                 if (tradesRes.ok) {
                     allTrades = await tradesRes.json();
-                    console.log('Trades count:', allTrades.length);
                     renderTrades(allTrades);
                 }
 
@@ -638,10 +631,12 @@
                 const pnlClass = t.net_pnl >= 0 ? 'positive' : 'negative';
                 const pnlSign = t.net_pnl >= 0 ? '+' : '';
                 const total = (t.total_usdt || t.price * t.quantity).toFixed(2);
+                // Show SELL for closed trades, BUY for open trades
+                const displaySide = t.status === 'CLOSED' ? 'SELL' : t.side;
                 html += '<tr>';
                 html += '<td>' + date + '</td>';
                 html += '<td style="font-weight: 500;">' + t.symbol + '</td>';
-                html += '<td><span class="badge ' + t.side.toLowerCase() + '">' + t.side + '</span></td>';
+                html += '<td><span class="badge ' + displaySide.toLowerCase() + '">' + displaySide + '</span></td>';
                 html += '<td>$' + t.price.toFixed(2) + '</td>';
                 html += '<td>' + (t.closed_at ? '$' + t.price.toFixed(2) : '--') + '</td>';
                 html += '<td>' + t.quantity.toFixed(6) + '</td>';

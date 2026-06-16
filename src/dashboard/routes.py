@@ -82,19 +82,23 @@ def api_strategies():
 def api_stats():
     db = SessionLocal()
     try:
-        total = db.query(Trade).filter(Trade.status == "CLOSED").count()
+        total_closed = db.query(Trade).filter(Trade.status == "CLOSED").count()
+        total_open = db.query(Trade).filter(Trade.status == "OPEN").count()
+        total_all = db.query(Trade).count()
         wins = db.query(Trade).filter(Trade.status == "CLOSED", Trade.net_pnl > 0).count()
         total_pnl = db.query(Trade.net_pnl).filter(Trade.status == "CLOSED").all()
         total_fees = db.query(Trade.fee_total).filter(Trade.status == "CLOSED").all()
 
         pnl_sum = sum(p[0] for p in total_pnl) if total_pnl else 0
         fees_sum = sum(f[0] for f in total_fees) if total_fees else 0
-        win_rate = (wins / total * 100) if total > 0 else 0
+        win_rate = (wins / total_closed * 100) if total_closed > 0 else 0
 
         return jsonify({
-            "total_trades": total,
+            "total_trades": total_all,
+            "closed_trades": total_closed,
+            "open_trades": total_open,
             "wins": wins,
-            "losses": total - wins,
+            "losses": total_closed - wins,
             "win_rate": round(win_rate, 1),
             "total_pnl": round(pnl_sum, 2),
             "total_fees": round(fees_sum, 2),
