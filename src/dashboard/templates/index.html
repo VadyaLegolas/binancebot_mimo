@@ -509,11 +509,14 @@
                 if (capRes.ok) {
                     const cap = await capRes.json();
 
-                    // Показать текущий баланс с цветом
+                    // Показать текущий баланс с цветом и прибылью/убытком
                     const startingEl = document.getElementById('starting');
                     const currentBalance = cap.current_balance;
                     const startingCapital = cap.starting_capital;
-                    startingEl.textContent = currentBalance.toFixed(2) + ' USDT';
+                    const profit = currentBalance - startingCapital;
+                    const profitSign = profit >= 0 ? '+' : '';
+                    
+                    startingEl.textContent = currentBalance.toFixed(2) + ' USDT (' + profitSign + profit.toFixed(2) + ')';
                     
                     if (currentBalance > startingCapital) {
                         startingEl.style.color = 'var(--success)';
