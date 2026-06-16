@@ -6,7 +6,6 @@ from loguru import logger
 from dotenv import load_dotenv
 from apscheduler.schedulers.background import BackgroundScheduler
 
-# Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 load_dotenv()
@@ -14,6 +13,19 @@ load_dotenv()
 logger.remove()
 logger.add(sys.stderr, level=os.getenv("LOG_LEVEL", "INFO"))
 logger.add("logs/bot.log", rotation="10 MB", retention="7 days", level="DEBUG")
+
+
+def send_telegram(message: str):
+    """Отправить сообщение в Telegram."""
+    try:
+        import requests
+        token = os.getenv("TELEGRAM_BOT_TOKEN")
+        chat_id = os.getenv("TELEGRAM_CHAT_ID")
+        if token and chat_id:
+            url = f"https://api.telegram.org/bot{token}/sendMessage"
+            requests.post(url, json={"chat_id": chat_id, "text": message}, timeout=10)
+    except Exception as e:
+        logger.error(f"Не удалось отправить сообщение в Telegram: {e}")
 
 
 def load_config() -> dict:
@@ -30,7 +42,7 @@ def setup_strategies(binance_client, config: dict):
         strategy = strategy_cls(binance_client, config)
         manager.register(name, strategy)
     manager.set_active("auto")
-    logger.info(f"Strategies registered: {list(ALL_STRATEGIES.keys())}")
+    logger.info(f"Стратегии зарегистрированы: {list(ALL_STRATEGIES.keys())}")
     return manager
 
 
@@ -45,7 +57,7 @@ def setup_learning(binance_client, strategy_manager, config: dict):
     rl_agent = RLAgent(binance_client, config)
     guard = AnomalyGuard(config)
 
-    logger.info("Learning Engine initialized")
+    logger.info("Learning Engine инициализирован")
     return tuner, weighter, rl_agent, guard
 
 
@@ -63,7 +75,7 @@ def setup_scheduler(strategy_manager, tuner, weighter, rl_agent, guard) -> Backg
     def check_optimization():
         for name in strategy_manager.strategies:
             if tuner.should_optimize(name):
-                logger.info(f"Scheduler: optimizing params for {name}")
+                logger.info(f"Планировщик: оптимизация параметров для {name}")
                 tuner.optimize(name)
 
     scheduler.add_job(
@@ -87,9 +99,11 @@ def setup_scheduler(strategy_manager, tuner, weighter, rl_agent, guard) -> Backg
             if a["action"] == "rollback":
                 for name in strategy_manager.strategies:
                     guard.rollback_latest_params(name)
+                send_telegram(f"⚠️ AnomalyGuard: откат параметров для стратегий")
             elif a["action"] == "stop_trading":
                 strategy_manager.set_active("stop")
-                logger.warning("AnomalyGuard: trading stopped due to drawdown")
+                logger.warning("AnomalyGuard: торговля остановлена из-за просадки")
+                send_telegram("🛑 AnomalyGuard: торговля остановлена (просадка > 8%)")
 
     scheduler.add_job(
         func=check_anomalies,
@@ -100,7 +114,7 @@ def setup_scheduler(strategy_manager, tuner, weighter, rl_agent, guard) -> Backg
 
     def check_rl_retrain():
         if rl_agent.should_retrain():
-            logger.info("Scheduler: retraining RL agent")
+            logger.info("Планировщик: переобучение RL-агента")
             rl_agent.train(steps=10000)
 
     scheduler.add_job(
@@ -112,7 +126,7 @@ def setup_scheduler(strategy_manager, tuner, weighter, rl_agent, guard) -> Backg
     )
 
     scheduler.start()
-    logger.info("APScheduler started with all learning jobs")
+    logger.info("APScheduler запущен со всеми задачами learning")
     return scheduler
 
 
@@ -131,11 +145,12 @@ def run_flask(config, tuner, weighter, rl_agent, guard):
 
 
 def main():
-    logger.info("Starting Binance Trading Bot...")
+    logger.info("Запуск Binance Trading Bot...")
+    send_telegram("🚀 Бот запущен!")
 
     from src.database.migrations import run_migrations
     run_migrations()
-    logger.info("Database ready")
+    logger.info("База данных готова")
 
     config = load_config()
 
@@ -145,7 +160,8 @@ def main():
         api_secret=os.getenv("BINANCE_API_SECRET", ""),
         testnet=os.getenv("BINANCE_TESTNET", "true").lower() == "true",
     )
-    logger.info(f"Binance client initialized (testnet={binance_client.testnet})")
+    mode = "Testnet" if binance_client.testnet else "Mainnet"
+    logger.info(f"Binance клиент инициализирован ({mode})")
 
     strategy_manager = setup_strategies(binance_client, config)
     tuner, weighter, rl_agent, guard = setup_learning(binance_client, strategy_manager, config)
@@ -158,10 +174,12 @@ def main():
         daemon=True,
     )
     flask_thread.start()
-    logger.info("Flask dashboard started on port 5000")
+    logger.info("Dashboard запущен на порту 5000")
 
     from src.telegram_bot.app import run_telegram_bot
-    logger.info("Starting Telegram bot...")
+    logger.info("Запуск Telegram бота...")
+    send_telegram(f"✅ Бот готов к работе!\nРежим: {mode}\nСтратегии: {', '.join(strategy_manager.strategies.keys())}")
+
     try:
         run_telegram_bot(
             binance_client=binance_client,
@@ -172,7 +190,8 @@ def main():
             strategy_manager=strategy_manager,
         )
     except KeyboardInterrupt:
-        logger.info("Shutting down...")
+        logger.info("Остановка бота...")
+        send_telegram("🛑 Бот остановлен!")
         scheduler.shutdown()
 
 
