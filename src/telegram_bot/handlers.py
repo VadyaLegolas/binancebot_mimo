@@ -129,25 +129,25 @@ async def handle_init(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         binance = get_binance(context.application)
-        logger.info(f"Balance check: binance client type = {type(binance)}")
         account = binance._request_with_retry(binance.client.get_account)
-        logger.info(f"Balance check: account keys = {list(account.keys())[:5]}")
         
+        tracked = ["USDT", "BTC", "ETH", "SOL"]
         balances = []
         for balance in account["balances"]:
+            asset = balance["asset"]
+            if asset not in tracked:
+                continue
             free = float(balance["free"])
             locked = float(balance["locked"])
             if free > 0 or locked > 0:
-                balances.append((balance["asset"], free, locked))
-        
-        logger.info(f"Balance check: found {len(balances)} balances")
+                balances.append((asset, free, locked))
         
         if not balances:
             await reply(update, "💰 Баланс пуст")
             return
         
         lines = ["💰 Баланс аккаунта:\n"]
-        for asset, free, locked in sorted(balances, key=lambda x: -x[1])[:10]:
+        for asset, free, locked in sorted(balances, key=lambda x: -x[1]):
             if locked > 0:
                 lines.append(f"  {asset}: {free:.6f} (заморожено: {locked:.6f})")
             else:
@@ -155,7 +155,6 @@ async def handle_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         await reply(update, "\n".join(lines))
     except Exception as e:
-        logger.error(f"Balance check error: {e}")
         await reply(update, f"⚠️ Ошибка: {e}")
 
 
