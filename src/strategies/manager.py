@@ -7,6 +7,19 @@ from src.core.capital import calc_pnl
 from src.core.constants import FEE_RATE, CORE_PAIRS
 from src.database.session import SessionLocal
 from src.database.models import Trade
+import os
+import requests
+
+
+def send_telegram(message: str):
+    try:
+        token = os.getenv("TELEGRAM_BOT_TOKEN")
+        chat_id = os.getenv("TELEGRAM_CHAT_ID")
+        if token and chat_id:
+            url = f"https://api.telegram.org/bot{token}/sendMessage"
+            requests.post(url, json={"chat_id": chat_id, "text": message}, timeout=10)
+    except Exception:
+        pass
 
 
 class StrategyManager:
@@ -121,6 +134,7 @@ class StrategyManager:
                 db.add(trade)
                 db.commit()
                 logger.info(f"BUY {symbol}: {qty:.6f} @ {price:.2f} ({strategy_name})")
+                send_telegram(f"🟢 ПОКУПКА {symbol}\nКоличество: {qty:.6f}\nЦена: ${price:,.2f}\nСумма: ${total_usdt:.2f}\nСтратегия: {strategy_name}")
             finally:
                 db.close()
 
@@ -170,6 +184,8 @@ class StrategyManager:
                         f"SELL {symbol}: {qty:.6f} @ {sell_price:.2f} | "
                         f"net PnL: {pnl['net_pnl']:.4f} ({pnl['net_pnl_pct']:.2f}%)"
                     )
+                    emoji = "🟢" if pnl['net_pnl'] >= 0 else "🔴"
+                    send_telegram(f"{emoji} ПРОДАЖА {symbol}\nКоличество: {qty:.6f}\nЦена: ${sell_price:,.2f}\nPnL: ${pnl['net_pnl']:.2f} ({pnl['net_pnl_pct']:.2f}%)\nСтратегия: {strategy_name}")
                 else:
                     trade = Trade(
                         order_id=str(order["orderId"]),

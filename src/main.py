@@ -125,9 +125,32 @@ def setup_scheduler(strategy_manager, tuner, weighter, rl_agent, guard) -> Backg
         id="rl_retrain",
     )
 
+    def show_prices_job():
+        show_prices(strategy_manager.binance)
+
+    scheduler.add_job(
+        func=show_prices_job,
+        trigger="interval",
+        minutes=5,
+        id="price_ticker",
+    )
+
     scheduler.start()
     logger.info("APScheduler запущен со всеми задачами learning")
     return scheduler
+
+
+def show_prices(binance_client):
+    """Показать текущие цены в терминале."""
+    pairs = ["BTC", "ETH", "SOL"]
+    prices = []
+    for symbol in pairs:
+        try:
+            price = binance_client.get_price(symbol)
+            prices.append(f"{symbol}: ${price:,.2f}")
+        except Exception:
+            prices.append(f"{symbol}: --")
+    logger.info("Цены: " + " | ".join(prices))
 
 
 def run_flask(config, tuner, weighter, rl_agent, guard):
@@ -165,6 +188,7 @@ def main():
     )
     mode = "Testnet" if binance_client.testnet else "Mainnet"
     logger.info(f"Binance клиент инициализирован ({mode})")
+    show_prices(binance_client)
 
     strategy_manager = setup_strategies(binance_client, config)
     tuner, weighter, rl_agent, guard = setup_learning(binance_client, strategy_manager, config)
