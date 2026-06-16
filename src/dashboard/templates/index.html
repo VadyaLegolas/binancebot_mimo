@@ -563,6 +563,7 @@
                         const date = t.opened_at ? new Date(t.opened_at).toLocaleString('ru-RU') : '--';
                         const pnlClass = t.net_pnl >= 0 ? 'positive' : 'negative';
                         const pnlSign = t.net_pnl >= 0 ? '+' : '';
+                        const total = (t.total_usdt || t.price * t.quantity).toFixed(2);
                         return `
                         <tr>
                             <td>${date}</td>
@@ -571,7 +572,7 @@
                             <td>$${t.price.toFixed(2)}</td>
                             <td>${t.closed_at ? '$' + t.price.toFixed(2) : '--'}</td>
                             <td>${t.quantity.toFixed(6)}</td>
-                            <td>$${t.total_usdt.toFixed(2)}</td>
+                            <td>$${total}</td>
                             <td class="${pnlClass}">${pnlSign}${t.net_pnl.toFixed(2)}</td>
                             <td>${t.strategy || 'manual'}</td>
                             <td><span class="badge ${t.status.toLowerCase()}">${t.status}</span></td>
