@@ -52,6 +52,14 @@ def get_capital_info(binance_client=None) -> dict | None:
         # Current balance = starting capital + PnL
         current_balance = session.starting_capital + net_pnl
 
+        # Get real balance from Binance
+        real_balance = 0.0
+        if binance_client:
+            try:
+                real_balance = binance_client.get_balance("USDT")
+            except Exception:
+                pass
+
         # Calculate unrealized PnL from open trades
         open_trades = db.query(Trade).filter(Trade.status == "OPEN").all()
         unrealized_pnl = 0.0
@@ -76,7 +84,7 @@ def get_capital_info(binance_client=None) -> dict | None:
 
         return {
             "starting_capital": session.starting_capital,
-            "real_balance": round(current_balance, 2),
+            "real_balance": round(real_balance, 2),
             "net_pnl": round(net_pnl, 2),
             "unrealized_pnl": round(unrealized_pnl, 2),
             "current_balance": round(current_balance, 2),

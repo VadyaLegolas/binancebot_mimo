@@ -335,10 +335,19 @@
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">Реальный баланс</span>
+                    <div class="card-icon">🏦</div>
+                </div>
+                <div class="stat-value" id="real-balance">--</div>
+                <div class="stat-change">Баланс Binance</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Баланс</span>
                     <div class="card-icon">💰</div>
                 </div>
                 <div class="stat-value" id="starting">--</div>
-                <div class="stat-change" id="starting-change">Баланс Binance</div>
+                <div class="stat-change" id="starting-change">Стартовый капитал + PnL</div>
             </div>
 
             <div class="card">
@@ -544,13 +553,20 @@
                 const capRes = await fetch('/api/capital');
                 if (capRes.ok) {
                     const cap = await capRes.json();
+                    
+                    // Реальный баланс (Binance)
+                    const realBalanceEl = document.getElementById('real-balance');
+                    const realBalance = cap.real_balance || 0;
+                    realBalanceEl.textContent = realBalance.toFixed(2) + ' USDT';
+
+                    // Баланс (стартовый + PnL)
                     const startingEl = document.getElementById('starting');
-                    const realBalance = cap.real_balance || cap.current_balance || 0;
+                    const currentBalance = cap.current_balance || 0;
                     const startingCapital = cap.starting_capital || 100;
                     const pnl = cap.net_pnl || 0;
                     const pnlSign = pnl >= 0 ? '+' : '';
                     
-                    startingEl.textContent = realBalance.toFixed(2) + ' USDT (' + pnlSign + pnl.toFixed(2) + ')';
+                    startingEl.textContent = currentBalance.toFixed(2) + ' USDT (' + pnlSign + pnl.toFixed(2) + ')';
                     startingEl.style.color = pnl >= 0 ? 'var(--success)' : pnl < 0 ? 'var(--danger)' : 'var(--text-primary)';
 
                     document.getElementById('pnl').textContent = pnlSign + pnl.toFixed(2) + ' USDT';
