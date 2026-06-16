@@ -87,10 +87,12 @@ def api_stats():
         total_all = db.query(Trade).count()
         wins = db.query(Trade).filter(Trade.status == "CLOSED", Trade.net_pnl > 0).count()
         total_pnl = db.query(Trade.net_pnl).filter(Trade.status == "CLOSED").all()
-        total_fees = db.query(Trade.fee_total).filter(Trade.status == "CLOSED").all()
+        
+        # Calculate fees for ALL trades
+        all_fees = db.query(Trade.fee_total).all()
+        fees_sum = sum(f[0] for f in all_fees) if all_fees else 0
 
         pnl_sum = sum(p[0] for p in total_pnl) if total_pnl else 0
-        fees_sum = sum(f[0] for f in total_fees) if total_fees else 0
         win_rate = (wins / total_closed * 100) if total_closed > 0 else 0
 
         return jsonify({
