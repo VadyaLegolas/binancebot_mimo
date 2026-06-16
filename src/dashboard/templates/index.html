@@ -554,7 +554,7 @@
                 if (capRes.ok) {
                     const cap = await capRes.json();
                     
-                    // Реальный баланс (Binance) + PnL
+                    // Реальный баланс (Binance) + изменение от стартового
                     const realBalanceEl = document.getElementById('real-balance');
                     const realBalance = cap.real_balance || 0;
                     const startingCapital = cap.starting_capital || 100;
@@ -563,10 +563,10 @@
                     realBalanceEl.textContent = realBalance.toFixed(2) + ' USDT (' + realPnlSign + realPnl.toFixed(2) + ')';
                     realBalanceEl.style.color = realPnl >= 0 ? 'var(--success)' : realPnl < 0 ? 'var(--danger)' : 'var(--text-primary)';
 
-                    // Баланс = стартовый + PnL
+                    // Баланс = стартовый + PnL (меняется при сделках)
                     const startingEl = document.getElementById('starting');
+                    const balance = cap.balance || 100;
                     const pnl = cap.net_pnl || 0;
-                    const balance = startingCapital + pnl;
                     const pnlSign = pnl >= 0 ? '+' : '';
                     startingEl.textContent = balance.toFixed(2) + ' USDT (' + pnlSign + pnl.toFixed(2) + ')';
                     startingEl.style.color = pnl >= 0 ? 'var(--success)' : pnl < 0 ? 'var(--danger)' : 'var(--text-primary)';

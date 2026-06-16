@@ -32,6 +32,23 @@ def get_capital_info(binance_client=None) -> dict | None:
         if not session:
             return None
 
+        # Calculate total spent on buys and received from sells
+        total_spent = 0.0
+        total_received = 0.0
+        total_fees = 0.0
+        
+        all_trades = db.query(Trade).all()
+        for trade in all_trades:
+            if trade.side == "BUY":
+                total_spent += trade.total_usdt
+                total_fees += trade.fee_buy
+            elif trade.side == "SELL":
+                total_received += trade.total_usdt
+                total_fees += trade.fee_sell
+
+        # Баланс = стартовый - потрачено + получено - комиссии
+        balance = session.starting_capital - total_spent + total_received - total_fees
+
         # Get real balance from Binance
         real_balance = 0.0
         if binance_client:
@@ -40,8 +57,8 @@ def get_capital_info(binance_client=None) -> dict | None:
             except Exception:
                 pass
 
-        # PnL = real balance - starting capital
-        net_pnl = real_balance - session.starting_capital
+        # PnL = баланс - стартовый
+        net_pnl = balance - session.starting_capital
 
         # Calculate unrealized PnL from open trades
         open_trades = db.query(Trade).filter(Trade.status == "OPEN").all()
@@ -56,18 +73,16 @@ def get_capital_info(binance_client=None) -> dict | None:
                 except Exception:
                     pass
 
-        # Total fees
-        total_fees = db.query(func.coalesce(func.sum(Trade.fee_total), 0.0)).scalar()
-
         # Calculate drawdown dynamically
-        max_balance = max(session.max_balance, real_balance)
+        max_balance = max(session.max_balance, balance)
         drawdown_pct = 0.0
         if max_balance > 0:
-            drawdown_pct = ((max_balance - real_balance) / max_balance) * 100
+            drawdown_pct = ((max_balance - balance) / max_balance) * 100
 
         return {
             "starting_capital": session.starting_capital,
             "real_balance": round(real_balance, 2),
+            "balance": round(balance, 2),
             "net_pnl": round(net_pnl, 2),
             "unrealized_pnl": round(unrealized_pnl, 2),
             "total_fees": round(total_fees, 2),
