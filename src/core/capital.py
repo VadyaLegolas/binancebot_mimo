@@ -32,6 +32,28 @@ def get_capital_info(binance_client=None) -> dict | None:
         if not session:
             return None
 
+        # Calculate total spent on buys and received from sells
+        total_spent = 0.0
+        total_received = 0.0
+        
+        closed_trades = db.query(Trade).filter(Trade.status == "CLOSED").all()
+        for trade in closed_trades:
+            if trade.side == "BUY":
+                total_spent += trade.total_usdt
+            elif trade.side == "SELL":
+                total_received += trade.total_usdt
+
+        # Also count open trades as spent
+        open_trades = db.query(Trade).filter(Trade.status == "OPEN").all()
+        for trade in open_trades:
+            total_spent += trade.total_usdt
+
+        # Total fees
+        total_fees = db.query(func.coalesce(func.sum(Trade.fee_total), 0.0)).scalar()
+
+        # Баланс = стартовый - потрачено + получено - комиссии
+        balance = session.starting_capital - total_spent + total_received - total_fees
+
         # Get real balance from Binance
         real_balance = 0.0
         if binance_client:
@@ -40,16 +62,12 @@ def get_capital_info(binance_client=None) -> dict | None:
             except Exception:
                 pass
 
-        # PnL = real balance - starting capital
-        net_pnl = real_balance - session.starting_capital
+        # PnL = баланс - стартовый
+        net_pnl = balance - session.starting_capital
 
         # Calculate unrealized PnL from open trades
-        open_trades = db.query(Trade).filter(Trade.status == "OPEN").all()
         unrealized_pnl = 0.0
-        total_invested = 0.0
-        
         for trade in open_trades:
-            total_invested += trade.total_usdt
             if binance_client:
                 try:
                     current_price = binance_client.get_price(trade.symbol)
@@ -63,18 +81,18 @@ def get_capital_info(binance_client=None) -> dict | None:
         total_fees = db.query(func.coalesce(func.sum(Trade.fee_total), 0.0)).scalar()
 
         # Calculate drawdown dynamically
-        max_balance = max(session.max_balance, real_balance)
+        max_balance = max(session.max_balance, balance)
         drawdown_pct = 0.0
         if max_balance > 0:
-            drawdown_pct = ((max_balance - real_balance) / max_balance) * 100
+            drawdown_pct = ((max_balance - balance) / max_balance) * 100
 
         return {
             "starting_capital": session.starting_capital,
             "real_balance": round(real_balance, 2),
+            "balance": round(balance, 2),
             "net_pnl": round(net_pnl, 2),
             "unrealized_pnl": round(unrealized_pnl, 2),
-            "current_balance": round(real_balance, 2),
-            "total_with_open": round(real_balance + unrealized_pnl, 2),
+            "total_with_open": round(balance + unrealized_pnl, 2),
             "total_fees": round(total_fees, 2),
             "open_positions": len(open_trades),
             "max_balance": max_balance,
