@@ -339,6 +339,13 @@ async def handle_sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         binance = get_binance(context.application)
+        
+        # Check if we have enough balance
+        asset_balance = binance.get_balance(symbol)
+        if asset_balance < quantity:
+            await reply(update, f"⚠️ Недостаточно {symbol}.\nБаланс: {asset_balance:.6f}\nНужно: {quantity:.6f}")
+            return
+        
         order = binance.place_market_sell(symbol, quantity)
         
         fill_price = float(order["fills"][0]["price"]) if order.get("fills") else float(order.get("price", 0))
