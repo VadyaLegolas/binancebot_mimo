@@ -274,9 +274,15 @@ async def handle_buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         binance = get_binance(context.application)
 
+        # Check USDT balance
+        usdt_balance = binance.get_balance("USDT")
+        if usdt_balance < amount:
+            await reply(update, f"⚠️ Недостаточно USDT.\nБаланс: {usdt_balance:.2f} USDT\nНужно: {amount:.2f} USDT")
+            return
+
         min_notional = binance.get_min_notional(symbol)
         if amount < min_notional:
-            await reply(update, f"Minimum notional for {symbol}: {min_notional} USDT")
+            await reply(update, f"⚠️ Минимальная сумма для {symbol}: {min_notional} USDT")
             return
 
         order = binance.place_market_buy(symbol, amount)
