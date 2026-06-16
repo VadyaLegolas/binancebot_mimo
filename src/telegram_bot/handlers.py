@@ -10,14 +10,30 @@ from src.core.constants import CORE_PAIRS, MIN_TRADE_USDT
 from datetime import datetime
 
 COMMANDS_FOOTER = (
-    "\n\n──────────────────\n"
-    "📋 Команды:\n"
-    "/init <сумма> | /buy <монета> <сумма> | /sell <монета> <кол>\n"
-    "/balance | /capital | /positions | /stats | /pnl | /fees\n"
-    "/price <монета> | /pairs | /status | /mode testnet|mainnet\n"
-    "/strategy auto|grid|dca|rsi_ema|mtf\n"
-    "/rl on|off|status|train | /learn stats|retrain|history\n"
-    "/help"
+    "\n\n━━━━━━━━━━━━━━━━━━━━\n"
+    "📌 Доступные команды:\n\n"
+    "💰 Торговля:\n"
+    "  /init <сумма> — стартовый капитал\n"
+    "  /buy <монета> <сумма> — купить\n"
+    "  /sell <монета> <кол> — продать\n"
+    "  /sell_all <монета> — продать всё\n\n"
+    "📊 Информация:\n"
+    "  /balance — баланс\n"
+    "  /capital — капитал\n"
+    "  /positions — позиции\n"
+    "  /stats — статистика\n"
+    "  /pnl — прибыль\n"
+    "  /fees — комиссии\n"
+    "  /price <монета> — цена\n\n"
+    "⚙️ Управление:\n"
+    "  /status — статус\n"
+    "  /pairs — пары\n"
+    "  /mode — режим\n"
+    "  /strategy — стратегия\n\n"
+    "🧠 Обучение:\n"
+    "  /rl — RL-агент\n"
+    "  /learn — обучение\n"
+    "  /help — помощь"
 )
 
 
@@ -70,29 +86,27 @@ def get_binance(app: Application) -> BinanceClient:
 
 async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await reply(update, 
-        "🤖 Binance Trading Bot v2.0\n\n"
-        "Добро пожаловать! Вот все доступные команды:\n\n"
-        "💰 Торговля:\n"
-        "/init <сумма> | /buy <монета> <сумма> | /sell <монета> <кол>\n"
-        "/sell_all <монета>\n\n"
-        "📊 Информация:\n"
-        "/balance | /capital | /positions | /stats | /pnl | /fees | /price\n\n"
-        "⚙️ Управление:\n"
-        "/status | /pairs | /mode | /strategy\n\n"
-        "🧠 Обучение:\n"
-        "/rl | /learn | /help"
+        "╔══════════════════════╗\n"
+        "║  🤖 Binance Bot v2.0  ║\n"
+        "╚══════════════════════╝\n\n"
+        "Добро пожаловать!\n\n"
+        "⚡ Автоматическая торговля\n"
+        "🧠 Самообучение\n"
+        "📊 Веб-дашборд: http://127.0.0.1:5000\n\n"
+        "Начните с /init <сумма>\n"
+        "Например: /init 100"
     )
 
 
 async def handle_init(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await reply(update, "Usage: /init <amount>\nExample: /init 100")
+        await reply(update, "📝 Использование: /init <сумма>\nПример: /init 100")
         return
 
     try:
         amount = float(context.args[0])
         if amount < 10:
-            await reply(update, "Minimum starting capital: 10 USDT")
+            await reply(update, "⚠️ Минимум: 10 USDT")
             return
 
         binance = get_binance(context.application)
@@ -100,12 +114,13 @@ async def handle_init(update: Update, context: ContextTypes.DEFAULT_TYPE):
         session = init_capital(amount, mode)
 
         await reply(update, 
-            f"✅ Starting capital set: {amount:.2f} USDT\n"
-            f"Mode: {mode}\n"
-            f"Trading ready."
+            f"✅ Капитал установлен!\n\n"
+            f"💰 Сумма: {amount:.2f} USDT\n"
+            f"🔧 Режим: {mode}\n\n"
+            f"Готов к торговле!"
         )
     except ValueError:
-        await reply(update, "Invalid amount. Usage: /init 100")
+        await reply(update, "⚠️ Неверная сумма. Используйте: /init 100")
 
 
 async def handle_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -285,11 +300,13 @@ async def handle_buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
             db.close()
 
         await reply(update, 
-            f"🟢 ПОКУПКА {symbol}\n"
-            f"Сумма: ${amount:.2f}\n"
-            f"Количество: {fill_qty}\n"
-            f"Цена: ${fill_price:,.2f}\n"
-            f"Ордер: #{order['orderId']}"
+            f"╔══════════════════════╗\n"
+            f"║  🟢 ПОКУПКА {symbol}  ║\n"
+            f"╚══════════════════════╝\n\n"
+            f"💵 Сумма: ${amount:.2f}\n"
+            f"📦 Количество: {fill_qty}\n"
+            f"💰 Цена: ${fill_price:,.2f}\n"
+            f"📋 Ордер: #{order['orderId']}"
         )
     except Exception as e:
         await reply(update, f"Error placing buy order: {e}")
@@ -316,11 +333,13 @@ async def handle_sell(update: Update, context: ContextTypes.DEFAULT_TYPE):
         sell_amount = fill_qty * fill_price
 
         await reply(update, 
-            f"🔴 ПРОДАЖА {symbol}\n"
-            f"Количество: {fill_qty}\n"
-            f"Цена: ${fill_price:,.2f}\n"
-            f"Сумма: ${sell_amount:,.2f}\n"
-            f"Ордер: #{order['orderId']}"
+            f"╔══════════════════════╗\n"
+            f"║  🔴 ПРОДАЖА {symbol}  ║\n"
+            f"╚══════════════════════╝\n\n"
+            f"📦 Количество: {fill_qty}\n"
+            f"💰 Цена: ${fill_price:,.2f}\n"
+            f"💵 Сумма: ${sell_amount:,.2f}\n"
+            f"📋 Ордер: #{order['orderId']}"
         )
     except Exception as e:
         await reply(update, f"Error placing sell order: {e}")
@@ -345,10 +364,12 @@ async def handle_sell_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 sell_amount = qty * sell_price
                 
                 await reply(update, 
-                    f"🔴 ПРОДАЖА ВСЕ {symbol}\n"
-                    f"Количество: {qty}\n"
-                    f"Цена: ${sell_price:,.2f}\n"
-                    f"Сумма: ${sell_amount:,.2f}"
+                    f"╔══════════════════════╗\n"
+                    f"║  🔴 ПРОДАЖА ВСЕ {symbol}  ║\n"
+                    f"╚══════════════════════╝\n\n"
+                    f"📦 Количество: {qty}\n"
+                    f"💰 Цена: ${sell_price:,.2f}\n"
+                    f"💵 Сумма: ${sell_amount:,.2f}"
                 )
                 return
 
@@ -560,26 +581,28 @@ async def handle_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await reply(update, 
-        "🤖 Помощь\n\n"
-        "💰 Торговля:\n"
-        "/init <сумма> - Установить стартовый капитал\n"
-        "/buy <монета> <сумма> - Купить в USDT\n"
-        "/sell <монета> <кол> - Продать количество\n"
-        "/sell_all <монета> - Продать всю позицию\n\n"
-        "📊 Информация:\n"
-        "/balance - Баланс аккаунта\n"
-        "/capital - Информация о капитале\n"
-        "/positions - Открытые позиции\n"
-        "/stats - Статистика торговли\n"
-        "/pnl - Прибыль/Убыток\n"
-        "/price <монета> - Текущая цена\n"
-        "/fees - Общие комиссии\n\n"
-        "⚙️ Управление:\n"
-        "/status - Статус бота\n"
-        "/pairs - Активные пары\n"
-        "/mode testnet|mainnet - Переключить режим\n"
-        "/strategy auto|grid|dca|rsi_ema|mtf\n\n"
-        "🧠 Обучение:\n"
-        "/rl on|off|status|train\n"
-        "/learn stats|retrain|history"
+        "╔══════════════════════╗\n"
+        "║  📚 СПРАВКА          ║\n"
+        "╚══════════════════════╝\n\n"
+        "💰 ТОРГОВЛЯ:\n"
+        "  /init <сумма> — стартовый капитал\n"
+        "  /buy <монета> <сумма> — купить\n"
+        "  /sell <монета> <кол> — продать\n"
+        "  /sell_all <монета> — продать всё\n\n"
+        "📊 ИНФОРМАЦИЯ:\n"
+        "  /balance — баланс аккаунта\n"
+        "  /capital — информация о капитале\n"
+        "  /positions — открытые позиции\n"
+        "  /stats — статистика торговли\n"
+        "  /pnl — прибыль/убыток\n"
+        "  /price <монета> — текущая цена\n"
+        "  /fees — общие комиссии\n\n"
+        "⚙️ УПРАВЛЕНИЕ:\n"
+        "  /status — статус бота\n"
+        "  /pairs — активные пары\n"
+        "  /mode testnet|mainnet — переключить\n"
+        "  /strategy auto|grid|dca|rsi_ema|mtf\n\n"
+        "🧠 ОБУЧЕНИЕ:\n"
+        "  /rl on|off|status|train\n"
+        "  /learn stats|retrain|history"
     )
