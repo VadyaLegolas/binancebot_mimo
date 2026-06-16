@@ -483,7 +483,11 @@
                 const balRes = await fetch('/api/balance');
                 if (balRes.ok) {
                     const bal = await balRes.json();
-                    document.getElementById('balance').textContent = bal.usdt.toFixed(2) + ' USDT';
+                    if (bal.usdt !== undefined) {
+                        document.getElementById('balance').textContent = bal.usdt.toFixed(2) + ' USDT';
+                    } else if (bal.error) {
+                        document.getElementById('balance').textContent = 'Ошибка: ' + bal.error;
+                    }
                 }
 
                 const capRes = await fetch('/api/capital');

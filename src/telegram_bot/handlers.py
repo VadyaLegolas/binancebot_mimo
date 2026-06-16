@@ -23,7 +23,7 @@ COMMANDS_FOOTER = (
 
 async def reply(update, text):
     """Ответить с закреплёнными командами."""
-    await reply(update, text + COMMANDS_FOOTER)
+    await update.message.reply_text(text + COMMANDS_FOOTER)
 
 
 def create_bot_app(binance_client=None) -> Application:
@@ -72,7 +72,6 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await reply(update, 
         "🤖 Binance Trading Bot v2.0\n\n"
         "Добро пожаловать! Используйте /help для списка команд."
-        + COMMANDS_FOOTER
     )
 
 
@@ -541,5 +540,4 @@ async def handle_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🧠 Обучение:\n"
         "/rl on|off|status|train\n"
         "/learn stats|retrain|history"
-        + COMMANDS_FOOTER
     )
