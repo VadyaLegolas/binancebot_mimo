@@ -499,9 +499,11 @@
 
         async function refresh() {
             const btn = document.querySelector('.refresh-btn');
-            btn.classList.add('loading');
+            if (btn) btn.classList.add('loading');
             
             try {
+                console.log('Starting refresh...');
+                
                 const balRes = await fetch('/api/balance');
                 if (balRes.ok) {
                     const bal = await balRes.json();
@@ -509,43 +511,28 @@
                         document.getElementById('balance').textContent = bal.usdt.toFixed(2) + ' USDT';
                     }
                 }
+                console.log('Balance loaded');
 
                 const capRes = await fetch('/api/capital');
                 if (capRes.ok) {
                     const cap = await capRes.json();
-
-                    // Показать текущий баланс с цветом и прибылью/убытком
                     const startingEl = document.getElementById('starting');
                     const currentBalance = cap.current_balance;
                     const startingCapital = cap.starting_capital;
                     const profit = currentBalance - startingCapital;
                     const profitSign = profit >= 0 ? '+' : '';
-                    
                     startingEl.textContent = currentBalance.toFixed(2) + ' USDT (' + profitSign + profit.toFixed(2) + ')';
-                    
-                    if (currentBalance > startingCapital) {
-                        startingEl.style.color = 'var(--success)';
-                    } else if (currentBalance < startingCapital) {
-                        startingEl.style.color = 'var(--danger)';
-                    } else {
-                        startingEl.style.color = 'var(--text-primary)';
-                    }
+                    startingEl.style.color = currentBalance > startingCapital ? 'var(--success)' : currentBalance < startingCapital ? 'var(--danger)' : 'var(--text-primary)';
 
-                    const pnlEl = document.getElementById('pnl');
-                    pnlEl.textContent = (cap.net_pnl >= 0 ? '+' : '') + cap.net_pnl.toFixed(2) + ' USDT';
-                    pnlEl.style.color = cap.net_pnl >= 0 ? 'var(--success)' : 'var(--danger)';
-
-                    const pnlChange = document.getElementById('pnl-change');
-                    pnlChange.textContent = (cap.net_pnl >= 0 ? '+' : '') + cap.net_pnl_pct.toFixed(2) + '%';
-                    pnlChange.className = 'stat-change ' + (cap.net_pnl >= 0 ? 'positive' : 'negative');
-
-                    const roiEl = document.getElementById('roi');
-                    roiEl.textContent = (cap.roi_pct >= 0 ? '+' : '') + cap.roi_pct.toFixed(1) + '%';
-                    roiEl.style.color = cap.roi_pct >= 0 ? 'var(--success)' : 'var(--danger)';
-
+                    document.getElementById('pnl').textContent = (cap.net_pnl >= 0 ? '+' : '') + cap.net_pnl.toFixed(2) + ' USDT';
+                    document.getElementById('pnl').style.color = cap.net_pnl >= 0 ? 'var(--success)' : 'var(--danger)';
+                    document.getElementById('pnl-change').textContent = (cap.net_pnl >= 0 ? '+' : '') + cap.net_pnl_pct.toFixed(2) + '%';
+                    document.getElementById('roi').textContent = (cap.roi_pct >= 0 ? '+' : '') + cap.roi_pct.toFixed(1) + '%';
+                    document.getElementById('roi').style.color = cap.roi_pct >= 0 ? 'var(--success)' : 'var(--danger)';
                     document.getElementById('drawdown').textContent = cap.drawdown_pct.toFixed(2) + '%';
                     document.getElementById('open-pnl').textContent = (cap.unrealized_pnl >= 0 ? '+' : '') + cap.unrealized_pnl.toFixed(2) + ' USDT';
                 }
+                console.log('Capital loaded');
 
                 const statsRes = await fetch('/api/stats');
                 if (statsRes.ok) {
@@ -554,32 +541,37 @@
                     document.getElementById('total-trades').textContent = stats.total_trades;
                     document.getElementById('total-fees').textContent = '-' + stats.total_fees.toFixed(2);
                 }
+                console.log('Stats loaded');
 
                 const tradesRes = await fetch('/api/trades');
-                console.log('Trades response status:', tradesRes.status);
+                console.log('Trades response:', tradesRes.status);
                 if (tradesRes.ok) {
                     const trades = await tradesRes.json();
                     console.log('Trades count:', trades.length);
                     const tbody = document.getElementById('trades-body');
-                    if (tbody && trades.length > 0) {
-                        tbody.innerHTML = trades.map(t => {
+                    console.log('tbody element:', tbody);
+                    if (tbody) {
+                        let html = '';
+                        trades.forEach(t => {
                             const date = t.opened_at ? new Date(t.opened_at).toLocaleString('ru-RU') : '--';
                             const pnlClass = t.net_pnl >= 0 ? 'positive' : 'negative';
                             const pnlSign = t.net_pnl >= 0 ? '+' : '';
                             const total = (t.total_usdt || t.price * t.quantity).toFixed(2);
-                            return '<tr>' +
-                                '<td>' + date + '</td>' +
-                                '<td style="font-weight: 500;">' + t.symbol + '</td>' +
-                                '<td><span class="badge ' + t.side.toLowerCase() + '">' + t.side + '</span></td>' +
-                                '<td>$' + t.price.toFixed(2) + '</td>' +
-                                '<td>' + (t.closed_at ? '$' + t.price.toFixed(2) : '--') + '</td>' +
-                                '<td>' + t.quantity.toFixed(6) + '</td>' +
-                                '<td>$' + total + '</td>' +
-                                '<td class="' + pnlClass + '">' + pnlSign + t.net_pnl.toFixed(2) + '</td>' +
-                                '<td>' + (t.strategy || 'manual') + '</td>' +
-                                '<td><span class="badge ' + t.status.toLowerCase() + '">' + t.status + '</span></td>' +
-                                '</tr>';
-                        }).join('');
+                            html += '<tr>';
+                            html += '<td>' + date + '</td>';
+                            html += '<td style="font-weight: 500;">' + t.symbol + '</td>';
+                            html += '<td><span class="badge ' + t.side.toLowerCase() + '">' + t.side + '</span></td>';
+                            html += '<td>$' + t.price.toFixed(2) + '</td>';
+                            html += '<td>' + (t.closed_at ? '$' + t.price.toFixed(2) : '--') + '</td>';
+                            html += '<td>' + t.quantity.toFixed(6) + '</td>';
+                            html += '<td>$' + total + '</td>';
+                            html += '<td class="' + pnlClass + '">' + pnlSign + t.net_pnl.toFixed(2) + '</td>';
+                            html += '<td>' + (t.strategy || 'manual') + '</td>';
+                            html += '<td><span class="badge ' + t.status.toLowerCase() + '">' + t.status + '</span></td>';
+                            html += '</tr>';
+                        });
+                        tbody.innerHTML = html;
+                        console.log('Trades HTML set');
                     }
                 }
 
