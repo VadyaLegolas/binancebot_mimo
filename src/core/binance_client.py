@@ -22,7 +22,7 @@ class BinanceClient:
         except Exception as e:
             logger.warning(f"Binance: не удалось синхронизировать время: {e}")
 
-    def _request_with_retry(self, func, max_retries=3, *args, **kwargs):
+    def _request_with_retry(self, func, *args, max_retries=3, **kwargs):
         for attempt in range(max_retries):
             try:
                 return func(*args, **kwargs)
