@@ -6,6 +6,9 @@ from loguru import logger
 from dotenv import load_dotenv
 from apscheduler.schedulers.background import BackgroundScheduler
 
+# Add project root to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 load_dotenv()
 
 logger.remove()
