@@ -433,6 +433,18 @@
 
         <div class="card full-width">
             <div class="section-title">📋 История сделок</div>
+            <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center;">
+                <div>
+                    <label style="color: var(--text-secondary); font-size: 12px;">С:</label>
+                    <input type="date" id="date-from" style="background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin-left: 8px;">
+                </div>
+                <div>
+                    <label style="color: var(--text-secondary); font-size: 12px;">По:</label>
+                    <input type="date" id="date-to" style="background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin-left: 8px;">
+                </div>
+                <button onclick="applyDateFilter()" style="background: var(--accent); color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Применить</button>
+                <button onclick="clearDateFilter()" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; cursor: pointer;">Сбросить</button>
+            </div>
             <div style="overflow-x: auto;">
                 <table>
                     <thead>
@@ -546,33 +558,9 @@
                 const tradesRes = await fetch('/api/trades');
                 console.log('Trades response:', tradesRes.status);
                 if (tradesRes.ok) {
-                    const trades = await tradesRes.json();
-                    console.log('Trades count:', trades.length);
-                    const tbody = document.getElementById('trades-body');
-                    console.log('tbody element:', tbody);
-                    if (tbody) {
-                        let html = '';
-                        trades.forEach(t => {
-                            const date = t.opened_at ? new Date(t.opened_at).toLocaleString('ru-RU') : '--';
-                            const pnlClass = t.net_pnl >= 0 ? 'positive' : 'negative';
-                            const pnlSign = t.net_pnl >= 0 ? '+' : '';
-                            const total = (t.total_usdt || t.price * t.quantity).toFixed(2);
-                            html += '<tr>';
-                            html += '<td>' + date + '</td>';
-                            html += '<td style="font-weight: 500;">' + t.symbol + '</td>';
-                            html += '<td><span class="badge ' + t.side.toLowerCase() + '">' + t.side + '</span></td>';
-                            html += '<td>$' + t.price.toFixed(2) + '</td>';
-                            html += '<td>' + (t.closed_at ? '$' + t.price.toFixed(2) : '--') + '</td>';
-                            html += '<td>' + t.quantity.toFixed(6) + '</td>';
-                            html += '<td>$' + total + '</td>';
-                            html += '<td class="' + pnlClass + '">' + pnlSign + t.net_pnl.toFixed(2) + '</td>';
-                            html += '<td>' + (t.strategy || 'manual') + '</td>';
-                            html += '<td><span class="badge ' + t.status.toLowerCase() + '">' + t.status + '</span></td>';
-                            html += '</tr>';
-                        });
-                        tbody.innerHTML = html;
-                        console.log('Trades HTML set');
-                    }
+                    allTrades = await tradesRes.json();
+                    console.log('Trades count:', allTrades.length);
+                    renderTrades(allTrades);
                 }
 
                 const learningRes = await fetch('/api/learning');
@@ -616,6 +604,77 @@
         initChart();
         refresh();
         setInterval(refresh, 30000);
+
+        let allTrades = [];
+
+        async function loadTrades() {
+            try {
+                const tradesRes = await fetch('/api/trades');
+                if (tradesRes.ok) {
+                    allTrades = await tradesRes.json();
+                    renderTrades(allTrades);
+                }
+            } catch (e) {
+                console.error('Error loading trades:', e);
+            }
+        }
+
+        function renderTrades(trades) {
+            const tbody = document.getElementById('trades-body');
+            if (!tbody) return;
+            
+            let html = '';
+            trades.forEach(t => {
+                const date = t.opened_at ? new Date(t.opened_at).toLocaleString('ru-RU') : '--';
+                const pnlClass = t.net_pnl >= 0 ? 'positive' : 'negative';
+                const pnlSign = t.net_pnl >= 0 ? '+' : '';
+                const total = (t.total_usdt || t.price * t.quantity).toFixed(2);
+                html += '<tr>';
+                html += '<td>' + date + '</td>';
+                html += '<td style="font-weight: 500;">' + t.symbol + '</td>';
+                html += '<td><span class="badge ' + t.side.toLowerCase() + '">' + t.side + '</span></td>';
+                html += '<td>$' + t.price.toFixed(2) + '</td>';
+                html += '<td>' + (t.closed_at ? '$' + t.price.toFixed(2) : '--') + '</td>';
+                html += '<td>' + t.quantity.toFixed(6) + '</td>';
+                html += '<td>$' + total + '</td>';
+                html += '<td class="' + pnlClass + '">' + pnlSign + t.net_pnl.toFixed(2) + '</td>';
+                html += '<td>' + (t.strategy || 'manual') + '</td>';
+                html += '<td><span class="badge ' + t.status.toLowerCase() + '">' + t.status + '</span></td>';
+                html += '</tr>';
+            });
+            tbody.innerHTML = html;
+        }
+
+        function applyDateFilter() {
+            const fromDate = document.getElementById('date-from').value;
+            const toDate = document.getElementById('date-to').value;
+            
+            let filtered = allTrades;
+            
+            if (fromDate) {
+                filtered = filtered.filter(t => {
+                    const d = new Date(t.opened_at);
+                    return d >= new Date(fromDate);
+                });
+            }
+            
+            if (toDate) {
+                const to = new Date(toDate);
+                to.setHours(23, 59, 59, 999);
+                filtered = filtered.filter(t => {
+                    const d = new Date(t.opened_at);
+                    return d <= to;
+                });
+            }
+            
+            renderTrades(filtered);
+        }
+
+        function clearDateFilter() {
+            document.getElementById('date-from').value = '';
+            document.getElementById('date-to').value = '';
+            renderTrades(allTrades);
+        }
     </script>
 </body>
 </html>
