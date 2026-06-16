@@ -250,13 +250,14 @@ def main():
     # Показать баланс
     try:
         account = binance_client.client.get_account()
+        tracked = ["USDT", "BTC", "ETH", "SOL"]
         balances = []
         for b in account["balances"]:
             free = float(b["free"])
-            if free > 0:
+            if free > 0 and b["asset"] in tracked:
                 balances.append(f"{b['asset']}: {free:.4f}")
         if balances:
-            logger.info("💰 Баланс: " + " | ".join(balances[:5]))
+            logger.info("💰 Баланс: " + " | ".join(balances))
     except Exception:
         pass
     

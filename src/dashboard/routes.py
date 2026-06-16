@@ -30,13 +30,15 @@ def api_trades():
     db = SessionLocal()
     try:
         trades = db.query(Trade).order_by(-Trade.created_at).limit(100).all()
-        return jsonify([{
+        response = jsonify([{
             "id": t.id, "symbol": t.symbol, "side": t.side,
             "price": t.price, "quantity": t.quantity,
-            "net_pnl": t.net_pnl, "fee_total": t.fee_total,
+            "total_usdt": t.total_usdt, "net_pnl": t.net_pnl, "fee_total": t.fee_total,
             "status": t.status, "strategy": t.strategy,
             "opened_at": str(t.opened_at), "closed_at": str(t.closed_at),
         } for t in trades])
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        return response
     finally:
         db.close()
 
