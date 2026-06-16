@@ -87,20 +87,24 @@
 | STRAT-02 | Phase 2 | Pending |
 | STRAT-03 | Phase 2 | Pending |
 | STRAT-04 | Phase 2 | Pending |
-| STRAT-05 | Phase 2 | Pending |
-| RISK-01 | Phase 2 | Pending |
-| RISK-02 | Phase 2 | Pending |
-| RISK-03 | Phase 2 | Pending |
-| RISK-04 | Phase 2 | Pending |
-| LRN-01 | Phase 3 | Pending |
-| LRN-02 | Phase 3 | Pending |
-| LRN-03 | Phase 3 | Pending |
-| LRN-04 | Phase 3 | Pending |
-| LRN-05 | Phase 3 | Pending |
-| TGB-04 | Phase 3 | Pending |
-| DASH-05 | Phase 3 | Pending |
-| PAIR-02 | Phase 3 | Pending |
-| PAIR-03 | Phase 3 | Pending |
+| STRAT-01 | Phase 2 | Done |
+| STRAT-02 | Phase 2 | Done |
+| STRAT-03 | Phase 2 | Done |
+| STRAT-04 | Phase 2 | Done |
+| STRAT-05 | Phase 2 | Done |
+| RISK-01 | Phase 2 | Done |
+| RISK-02 | Phase 2 | Done |
+| RISK-03 | Phase 2 | Done |
+| RISK-04 | Phase 2 | Done |
+| LRN-01 | Phase 3 | Done |
+| LRN-02 | Phase 3 | Done |
+| LRN-03 | Phase 3 | Done |
+| LRN-04 | Phase 3 | Done |
+| LRN-05 | Phase 3 | Done |
+| TGB-04 | Phase 3 | Done |
+| DASH-05 | Phase 3 | Done |
+| PAIR-02 | Phase 3 | Done |
+| PAIR-03 | Phase 3 | Done |
 
 **Coverage:**
 - v1 requirements: 38 total
