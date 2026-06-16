@@ -111,12 +111,12 @@ def api_balance():
     from flask import current_app
     binance = current_app.config.get("binance")
     if not binance:
-        return jsonify({"error": "Binance client not initialized"}), 503
+        return jsonify({"usdt": 0.0})
     try:
         usdt = binance.get_balance("USDT")
         return jsonify({"usdt": usdt})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        return jsonify({"usdt": 0.0})
 
 
 @bp.route("/api/learning")

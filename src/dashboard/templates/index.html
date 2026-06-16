@@ -485,8 +485,6 @@
                     const bal = await balRes.json();
                     if (bal.usdt !== undefined) {
                         document.getElementById('balance').textContent = bal.usdt.toFixed(2) + ' USDT';
-                    } else if (bal.error) {
-                        document.getElementById('balance').textContent = 'Ошибка: ' + bal.error;
                     }
                 }
 
@@ -571,7 +569,6 @@
                 }
             } catch (e) {
                 console.error('Refresh error:', e);
-                document.getElementById('bot-status').textContent = 'Error';
             }
         }
 

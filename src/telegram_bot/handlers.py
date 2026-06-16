@@ -71,7 +71,16 @@ def get_binance(app: Application) -> BinanceClient:
 async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await reply(update, 
         "🤖 Binance Trading Bot v2.0\n\n"
-        "Добро пожаловать! Используйте /help для списка команд."
+        "Добро пожаловать! Вот все доступные команды:\n\n"
+        "💰 Торговля:\n"
+        "/init <сумма> | /buy <монета> <сумма> | /sell <монета> <кол>\n"
+        "/sell_all <монета>\n\n"
+        "📊 Информация:\n"
+        "/balance | /capital | /positions | /stats | /pnl | /fees | /price\n\n"
+        "⚙️ Управление:\n"
+        "/status | /pairs | /mode | /strategy\n\n"
+        "🧠 Обучение:\n"
+        "/rl | /learn | /help"
     )
 
 
@@ -105,7 +114,7 @@ async def handle_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
         usdt = binance.get_balance("USDT")
         await reply(update, f"💰 USDT Balance: {usdt:.2f}")
     except Exception as e:
-        await reply(update, f"Error: {e}")
+        await reply(update, "⚠️ Не удалось получить баланс. Попробуйте позже.")
 
 
 async def handle_capital(update: Update, context: ContextTypes.DEFAULT_TYPE):
